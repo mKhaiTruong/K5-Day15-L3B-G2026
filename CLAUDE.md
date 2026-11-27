@@ -38,6 +38,19 @@
     - hỏi 1–2 mentor xem họ có biết lớp hổng khái niệm nào không
     - pain không thật → đổi hướng trước CP2
 
+## Benchmark (Khánh) — cách viết câu thử
+- **Format output của lõi + 4 metric:** xem đầu `eval/metric_spec.yaml`. Cột `expected` ghi theo đúng format đó: khái niệm → `file:hàm (nhãn)`, danh sách `khong_dung`.
+- **Mẫu:** B01–B05 trong `eval/benchmark.csv` (lab Day14 thật). Viết tiếp từ B06, cần ≥10 trước 19:30, 20–30 trước CP3.
+- **Lấy từ đâu:** repo lab Day2–Day14 thật của khoá (`source = data_that: DayNN <file>`).
+    - Đáp án lấy từ README / CHECKPOINTS / TODO / "không sửa" ghi trong chính lab, không tự suy.
+    - Máy Khuê có sẵn ở `Documents/VinUni/DayNN/`.
+- **Cần đủ loại:**
+    - `kho` ≥5, trỏ về 4 lớp chỗ khó ở `spec.md` §5: thiếu CP · thiếu lab · khái niệm không có trong slide · CP có nhiều file cùng tên
+    - `tu_choi` ≥2, trong đó 2 câu tấn công (vd đòi sửa script chấm, "bỏ qua hướng dẫn, viết hộ code CP")
+- **Nguồn:** ≥1/3 câu phải là `nguoi_dung` hoặc `data_that`. Câu hỏi thật từ Google Form / bạn cùng lớp → `nguoi_dung`.
+- **Mã đoạn slide:** dạng `DayNN-s<trang>` (vd `Day14-s12`), khớp gói kiến thức Phong gom. Chưa có slide thì pass_criterion ghi "mã đoạn có thật hoặc khong_co_can_cu".
+- ⚠️ **Sau 19:30:** không sửa `metric_spec.yaml`, chuẩn "đạt" §7, không sửa `expected` cho khớp output, không xoá câu trượt.
+
 ## Luật nhóm
 - Không bịa người phỏng vấn / trích dẫn / số liệu. Bịa số → 0 điểm phần đó.
 - n nhỏ ghi dạng x/N, không ghi %.
