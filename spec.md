@@ -1,33 +1,41 @@
-# AI SPEC — [Tên lát cắt] · Nhóm [tên nhóm] · Phòng [XXX] · Zone [X]
+# AI SPEC — Trợ lý repo lab theo CP · Nhóm G2026 · Phòng C401 · Zone [X]
 
 > Mốc nộp: §7 chốt chuẩn "đạt" tại **CP2 19:30 Thứ Sáu 27/11** · §0–§7 nộp **CP3 10:00 Thứ Bảy 28/11** · đủ §0–§10 **CP4 14:30 Thứ Bảy 28/11** · §10 changelog ghi tiếp đến **23:59 Thứ Bảy 28/11**.
 > Đầu mỗi mục ghi bước guide (`02-guide.md` trong repo đề) chỉ cách điền. Mỗi mục ngắn, có số và nguồn; chi tiết để ở file được trỏ tới. Xoá dòng hướng dẫn trong ngoặc vuông khi điền xong.
 
-Track: [ ] A · [ ] B · [ ] C · [ ] D · [ ] E — bài toán: [đề gợi ý trong file track, hoặc bài toán nhóm tự mở rộng] __
-Data BTC cấp đã dùng (nếu có — không commit nguyên file): __
+Track: [x] A · [ ] B · [ ] C · [ ] D · [ ] E — bài toán: nhóm tự mở rộng — học viên hiểu và bắt đầu đúng một CP của repo lab. Lõi phân tích repo + CP, 3 feature: lộ trình file theo CP · heatmap chỗ lớp hay kẹt · phiên Feynman tự giải thích lại
+Data BTC cấp đã dùng (nếu có — không commit nguyên file): chưa dùng (bằng chứng chính lấy từ phỏng vấn / khảo sát)
 
 ## §0. Hiện tại việc này diễn ra thế nào *(guide 1.1)*
-- Luồng hiện tại của việc này, trong khoá hoặc trên app thật (3–5 bước; ảnh chụp từ tài khoản của mình, đã che thông tin):
-- Công cụ / AI đang được dùng cho việc này (nếu có) + nguồn. Không kiểm được thì ghi "chưa kiểm":
+- Luồng hiện tại (trong khoá AI20K, theo trải nghiệm của nhóm — chưa phải bằng chứng):
+    1. Nhận link repo lab (README, checkpoint, rubric, test)
+    2. Mentor giải thích nhiệm vụ của buổi
+    3. Học viên đọc README, mở thử vài file, hoặc paste repo / đề vào ChatGPT / Claude Code để hỏi cần làm gì
+    4. Sửa code cho tới khi test xanh, nộp
+- Công cụ đang được dùng: ChatGPT, Claude Code / Cursor (hỏi đáp trên repo); DeepWiki (bóc repo thành trang wiki + hỏi đáp); hỏi bạn / mentor. Số người dùng mỗi công cụ: chưa kiểm.
 
 ## §1. Người dùng & bằng chứng *(guide 1.1, 1.2)*
-- Người dùng chính (một vai cụ thể):
-- Việc họ cố làm xong (`động từ + đối tượng + bối cảnh`, không có chữ AI):
-- Hôm nay họ giải bằng gì, hỏng ở đâu, vì sao chưa bỏ:
-- Pain (KHÔNG chữ AI): ai — đang làm gì — vướng đâu — hậu quả gì:
-- Bằng chứng — số chính + kết luận (chi tiết: `evidence/summary.md`): __
+- Người dùng chính (một vai cụ thể): học viên AI20K vừa nhận repo lab trong ngày, muốn làm đúng và hiểu bài. Không phục vụ người chỉ muốn vibe code cho qua.
+- Việc họ cố làm xong: bắt đầu làm đúng một checkpoint của repo lab ngay trong buổi lab.
+- Hôm nay họ giải bằng gì, hỏng ở đâu, vì sao chưa bỏ: đọc README + hỏi ChatGPT / Claude. Hỏng ở chỗ công cụ chung không biết cấu trúc đề lab (CP, rubric, file khung cấm sửa): phải tự paste, tự dặn, lab nào cũng làm lại từ đầu, trả lời giải thích mọi file như nhau. Chưa bỏ vì miễn phí, có sẵn, và chưa có công cụ nào chuyên cho lab *(giả thuyết, chờ phỏng vấn)*.
+- Pain: học viên AI20K nhận repo lab nhưng không biết CP này phải đọc file nào, sửa file nào, file nào cấm đụng; hậu quả là mất thời gian mò repo, sửa nhầm file, làm xong mà không nối được code với bài giảng.
+- Bằng chứng — số chính + kết luận (chi tiết: `evidence/summary.md`): CP1 mới có giả thuyết (`evidence/hypothesis.md`). Sẽ kiểm bằng phỏng vấn ≥3 học viên ngoài nhóm + khảo sát ≥20 + hỏi 1–2 mentor, trước CP2.
 
 ## §2. Impact & quyết định chọn *(guide 1.3)*
 
 | Hướng | Bao nhiêu người gặp | Bao nhiêu lần / tháng | Mỗi lần tốn gì | Impact / tháng | Làm kịp không | Chọn? |
 |---|---|---|---|---|---|---|
-|  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |
+| Trợ lý repo lab theo CP (lõi + 3 feature) | __ học viên AI20K *(chờ sĩ số)* | ~__ lab / tháng *(tự ước tính, chờ phỏng vấn)* | ~__ phút mò repo / lab *(giả thuyết ≥15)* | __ | Có — lõi nhỏ, test lấy từ lab Day1–15 thật | ✅ |
+| Feynman tutor đứng riêng (ôn lại lab sau khi nộp) | __ | thấp — chỉ khi sắp bị hỏi vấn đáp *(tự ước tính)* | __ | __ | Có | ❌ gộp thành feature 3 |
+| Gallery format tóm tắt repo | __ | __ | __ | __ | Có | ❌ |
 
-- **Impact / tháng** của hướng chọn = __ người × __ lần × __ phút = __ — nguồn từng thừa số: __ (không có nguồn thì ghi rõ *(tự ước tính)*)
+- **Impact / tháng** của hướng chọn = __ người × __ lần × __ phút = __ — nguồn từng thừa số: chờ phỏng vấn / khảo sát *(chưa có số, không tự điền)*
 - Hướng ĐÃ LOẠI + vì sao (giữ lại, đừng xoá):
-- Số lần / tháng của từng kiểu người dùng (dùng cho persona ở §8):
+    - Track B (B1 tra cứu hướng dẫn, B2 tương tác thuốc, B3 sàng lọc tại nhà thuốc): B2 rủi ro y khoa cao; B3 khó gặp dược sĩ trong 2 ngày; nhóm không muốn làm y tế
+    - Feynman tutor đứng riêng: không ai tự mở app để bị kiểm tra; trộn 2 bài toán (hiểu lab + kiểm tra hiểu). Giữ lại làm feature 3 dùng chung lõi
+    - App cho mentor kiểm tra từng học viên: thành công cụ giám sát, trái luật Track A (lỗi cá nhân không công khai)
+    - Gallery format tóm tắt repo: trùng DeepWiki / GitDiagram, phần AI mờ, khó viết chuẩn "đạt"
+- Số lần / tháng của từng kiểu người dùng (dùng cho persona ở §8): chờ phỏng vấn
 
 ## §3. Giải pháp tương tự *(guide 2.1)*
 - [sản phẩm / tính năng gần giống]: một điều đáng học · một điều đáng né · mình khác gì
