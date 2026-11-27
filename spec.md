@@ -39,7 +39,9 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): sẽ dùng
 - Số lần / tháng của từng kiểu người dùng (dùng cho persona ở §8): chờ phỏng vấn
 
 ## §3. Giải pháp tương tự *(guide 2.1)*
-- [sản phẩm / tính năng gần giống]: một điều đáng học · một điều đáng né · mình khác gì
+- **DeepWiki:** đáng học: sơ đồ cấu trúc repo, trỏ thẳng `file:hàm` · đáng né: không có slide bài giảng, không tách theo CP, không phân biệt file khung · mình khác gì: nối khái niệm trong slide với đúng CP / hàm, ép nhãn `khong_dung` cho file khung bằng code
+- **NotebookLM:** đáng học: bám chặt tài liệu nạp vào, trích dẫn đoạn gốc · đáng né: phải tự nạp slide + code thủ công, không hiểu cấu trúc repo theo CP · mình khác gì: có sẵn bản tóm tắt slide theo mã `DayNN-s<trang>` + đọc thẳng repo lab, kiểm hàm và mã slide có thật bằng code (`kiem_ham_ton_tai`, `ma_slide_ton_tai`)
+- **ChatGPT:** đáng học: giải thích khái niệm tự nhiên, đối thoại linh hoạt · đáng né: dễ bịa hàm / nguồn, sẵn sàng viết hộ code hoặc sửa cả file khung · mình khác gì: không viết code hộ, hỏi lại khi thiếu CP, chặn bịa hàm / slide bằng code
 
 ## §4. Thiết kế *(guide 2.2, 3.2)*
 - **Lát cắt MỘT CÂU:** Học viên AI20K chọn lab và CP muốn hiểu, AI quyết định CP đó luyện khái niệm bài giảng nào và khái niệm nằm ở file / hàm nào (nhãn đọc / sửa / không đụng), học viên nhận bản đồ khái niệm → code có trích slide và code.
