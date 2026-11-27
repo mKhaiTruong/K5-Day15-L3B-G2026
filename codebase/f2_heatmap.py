@@ -1,4 +1,4 @@
-"""Feature 2: Heatmap câu hỏi ẩn danh ("🔥 x/N bạn hỏi ở đây" + khái niệm/CP lớp kẹt nhất).
+"""Feature 2: Heatmap câu hỏi ẩn danh ("🔥 x/N lượt hỏi" hoặc "🔥 x/N bạn hỏi ở đây" + bảng lớp kẹt nhất).
 
 Chỉ đọc log từ data/heatmap/cau_hoi.jsonl và JSON output của lõi (answer(text)["output"]).
 Không sửa codebase/agent.py, tools.py, ai.py; không lưu hay hiển thị thông tin cá nhân.
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import os
-from collections import Counter
+from collections import Counter, defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_LOG_PATH = os.path.join(ROOT, "data", "heatmap", "cau_hoi.jsonl")
@@ -35,36 +35,79 @@ def doc_log(log_path: str | None = None) -> list[dict]:
     return rows
 
 
+def _lay_id_an_danh(row: dict) -> str | None:
+    for key in ("id", "anon_id", "session_id", "user_id"):
+        val = row.get(key)
+        if val is not None and str(val).strip():
+            return str(val).strip()
+    return None
+
+
 def thong_ke_heatmap(
     lab: str | None = None,
     log_path: str | None = None,
     min_samples: int = MIN_SAMPLES,
 ) -> dict:
-    """Tổng hợp tần suất (lab, cp, khai_niem); dưới min_samples trả về 'chưa đủ dữ liệu'."""
+    """Tổng hợp tần suất (lab, cp, khai_niem); dưới min_samples trả về 'chưa đủ dữ liệu'.
+
+    Nếu mọi dòng log đều có id ẩn danh: mẫu số N = số người duy nhất, badge '🔥 x/N bạn hỏi ở đây'.
+    Nếu không có id ẩn danh (mặc định của tools.py): mẫu số N = tổng số câu hỏi, badge '🔥 x/N lượt hỏi'.
+    """
     rows = doc_log(log_path)
     if lab:
         target = lab.strip().lower()
         rows = [r for r in rows if str(r.get("lab") or "").strip().lower() == target]
 
-    tong_luot = len(rows)
-    if tong_luot < min_samples:
+    co_id = bool(rows) and all(_lay_id_an_danh(r) is not None for r in rows)
+    if co_id:
+        mau_so = len({_lay_id_an_danh(r) for r in rows})
+        don_vi = "bạn hỏi ở đây"
+        loai_mau_so = "nguoi"
+    else:
+        mau_so = len(rows)
+        don_vi = "lượt hỏi"
+        loai_mau_so = "luot_hoi"
+
+    if mau_so < min_samples:
         return {
             "du_du_lieu": False,
             "thong_bao": "chưa đủ dữ liệu",
-            "tong_luot": tong_luot,
+            "loai_mau_so": loai_mau_so,
+            "don_vi": don_vi,
+            "tong_luot": mau_so,
             "top_ket": [],
         }
 
-    counts: Counter[tuple[str, str, str]] = Counter()
-    for r in rows:
-        r_lab = str(r.get("lab") or "").strip()
-        r_cp = str(r.get("cp") or "").strip()
-        concepts = r.get("khai_niem") or []
-        if not isinstance(concepts, list):
-            continue
-        seen_in_row = {str(c).strip() for c in concepts if str(c).strip()}
-        for ten in seen_in_row:
-            counts[(r_lab, r_cp, ten)] += 1
+    if co_id:
+        id_sets: dict[tuple[str, str, str], set[str]] = defaultdict(set)
+        for r in rows:
+            uid = _lay_id_an_danh(r)
+            assert uid is not None
+            r_lab = str(r.get("lab") or "").strip()
+            r_cp = str(r.get("cp") or "").strip()
+            concepts = r.get("khai_niem") or []
+            if not isinstance(concepts, list):
+                continue
+            for c in concepts:
+                ten = str(c).strip()
+                if ten:
+                    id_sets[(r_lab, r_cp, ten)].add(uid)
+        sorted_items = sorted(
+            ((k, len(uids)) for k, uids in id_sets.items()),
+            key=lambda kv: (-kv[1], kv[0]),
+        )
+    else:
+        counts: Counter[tuple[str, str, str]] = Counter()
+        for r in rows:
+            r_lab = str(r.get("lab") or "").strip()
+            r_cp = str(r.get("cp") or "").strip()
+            concepts = r.get("khai_niem") or []
+            if not isinstance(concepts, list):
+                continue
+            seen_in_row = {str(c).strip() for c in concepts if str(c).strip()}
+            for ten in seen_in_row:
+                counts[(r_lab, r_cp, ten)] += 1
+        sorted_items = counts.most_common()
 
     top_ket = [
         {
@@ -72,15 +115,17 @@ def thong_ke_heatmap(
             "cp": k_cp,
             "khai_niem": k_ten,
             "so_luot": so_luot,
-            "tong_luot": tong_luot,
-            "badge": f"🔥 {so_luot}/{tong_luot} bạn hỏi ở đây",
+            "tong_luot": mau_so,
+            "badge": f"🔥 {so_luot}/{mau_so} {don_vi}",
         }
-        for (k_lab, k_cp, k_ten), so_luot in counts.most_common()
+        for (k_lab, k_cp, k_ten), so_luot in sorted_items
     ]
     return {
         "du_du_lieu": True,
         "thong_bao": None,
-        "tong_luot": tong_luot,
+        "loai_mau_so": loai_mau_so,
+        "don_vi": don_vi,
+        "tong_luot": mau_so,
         "top_ket": top_ket,
     }
 
@@ -102,7 +147,7 @@ def badge_cho_output(
     log_path: str | None = None,
     min_samples: int = MIN_SAMPLES,
 ) -> list[dict]:
-    """Gắn badge '🔥 x/N bạn hỏi ở đây' (hoặc 'chưa đủ dữ liệu') cho từng khái niệm trong output lõi."""
+    """Gắn badge '🔥 x/N lượt hỏi' hoặc '🔥 x/N bạn hỏi ở đây' (hoặc 'chưa đủ dữ liệu') cho từng khái niệm."""
     data = _parse_output(output_json)
     if "tu_choi" in data or not data.get("khai_niem"):
         return []
@@ -134,7 +179,7 @@ def badge_cho_output(
                 "khai_niem": ten,
                 "so_luot": so_luot,
                 "tong_luot": tong,
-                "badge": f"🔥 {so_luot}/{tong} bạn hỏi ở đây",
+                "badge": f"🔥 {so_luot}/{tong} {stats['don_vi']}",
             }
         )
     return badges
@@ -145,16 +190,28 @@ def bao_cao_markdown(
     log_path: str | None = None,
     min_samples: int = MIN_SAMPLES,
 ) -> str:
-    """Xuất bảng 'Khái niệm / CP nào lớp kẹt nhất' dạng Markdown ẩn danh."""
+    """Xuất bảng 'Khái niệm / CP nào lớp kẹt nhất' dạng Markdown ẩn danh, ghi rõ mẫu số N."""
     stats = thong_ke_heatmap(lab=lab, log_path=log_path, min_samples=min_samples)
     tieu_de = f"## Heatmap khái niệm lớp kẹt nhất ({lab})" if lab else "## Heatmap khái niệm lớp kẹt nhất"
     if not stats["du_du_lieu"]:
-        return f"{tieu_de}\n\nchưa đủ dữ liệu ({stats['tong_luot']}/{min_samples} lượt hỏi)."
+        don_vi_ngan = "người" if stats["loai_mau_so"] == "nguoi" else "lượt hỏi"
+        return f"{tieu_de}\n\nchưa đủ dữ liệu ({stats['tong_luot']}/{min_samples} {don_vi_ngan})."
+
+    if stats["loai_mau_so"] == "nguoi":
+        giai_thich_mau = (
+            f"Mẫu số N = **{stats['tong_luot']}** người dùng ẩn danh "
+            "(1 người có thể hỏi nhiều khái niệm nên tổng số theo khái niệm có thể > N)."
+        )
+    else:
+        giai_thich_mau = (
+            f"Mẫu số N = **{stats['tong_luot']}** lượt hỏi "
+            "(1 câu hỏi có thể trúng nhiều khái niệm nên tổng lượt theo khái niệm có thể > N)."
+        )
 
     lines = [
         tieu_de,
         "",
-        f"Tổng lượt hỏi ẩn danh: **{stats['tong_luot']}**",
+        giai_thich_mau,
         "",
         "| Lab | CP | Khái niệm | Mức độ |",
         "|---|---|---|---|",
@@ -186,4 +243,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
