@@ -1,0 +1,13 @@
+id,"Khi làm lab, phần lớn code do ai viết?",Bạn có nhớ bài lab gần nhất là về chủ đề gì không?,Bạn có thể tự tin diễn giải các checkpoint khi mới làm xong không?,"Không mở code ra, bạn có chỉ được khái niệm đó nằm ở file/hàm nào không?","Từ lúc nộp lab đó tới giờ, bạn có mở lại slide bài giảng để đối chiếu với code không?","Trong 2 tuần qua, bạn có bị hỏi về code mình nộp (mentor, bạn bè, lúc demo) mà không trả lời được không","Lần gần nhất bạn muốn hiểu lại một lab, bạn đã làm gì?"
+P01,"Phần lớn do AI viết, mình sửa",Deploy,Không chắc,,Không,Không,Hỏi ChatGPT/Claude
+P02,"Phần lớn do AI viết, mình sửa",Có,Không,"Nhớ mang máng file, không nhớ hàm","Có, 1 lần",Chưa bị hỏi,Hỏi ChatGPT/Claude
+P03,Mình tự viết hết,Không,Không,Không chỉ được,Chưa bao giờ,Chưa bị hỏi,Chưa từng muốn
+P04,Gần như AI viết hết,Có,Không,Không chỉ được,Chưa bao giờ,Chưa bị hỏi,Chưa từng muốn
+P05,Gần như AI viết hết,Không,Có,"Nhớ mang máng file, không nhớ hàm","Có, hơn 1 lần",Chưa bị hỏi,Hỏi bạn/mentor
+P06,Gần như AI viết hết,Có,Có,"Nhớ mang máng file, không nhớ hàm",Chưa bao giờ,Chưa bị hỏi,Hỏi ChatGPT/Claude
+P07,"Phần lớn do AI viết, mình sửa",Có,Không,"Nhớ mang máng file, không nhớ hàm","Có, 1 lần","Có, 1 lần",Hỏi ChatGPT/Claude
+P08,"Phần lớn do AI viết, mình sửa",Có,Có,Chỉ được chính xác,"Có, hơn 1 lần",Chưa bị hỏi,Hỏi ChatGPT/Claude
+P09,Gần như AI viết hết,Có,Không,"Nhớ mang máng file, không nhớ hàm","Có, hơn 1 lần","Có, hơn 1 lần",Hỏi ChatGPT/Claude
+P10,Gần như AI viết hết,Có,Không,"Nhớ mang máng file, không nhớ hàm","Có, hơn 1 lần",Chưa bị hỏi,Hỏi ChatGPT/Claude
+P11,"Phần lớn do AI viết, mình sửa",Có,Không,"Nhớ mang máng file, không nhớ hàm","Có, hơn 1 lần",Chưa bị hỏi,Hỏi ChatGPT/Claude
+P12,Gần như AI viết hết,Có,Không,"Nhớ mang máng file, không nhớ hàm","Có, 1 lần",Chưa bị hỏi,Hỏi ChatGPT/Claude
