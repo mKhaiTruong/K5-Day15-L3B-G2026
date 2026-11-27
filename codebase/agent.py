@@ -36,10 +36,12 @@ Trả về DUY NHẤT một JSON:
   Dòng TODO đứng ngay trên các hàm (vd "TODO CP1: viết ba hàm dưới đây") áp cho các hàm ngay sau nó, đếm theo số dòng.
 - Nhãn "doc" nếu học viên chỉ cần đọc hoặc gọi lại hàm có sẵn.
 - Không bao giờ gắn nhãn "sua" cho file trong "File khung".
+- Trường "slide" chỉ ghi mã đoạn (vd "Day13-s12"), không chép nội dung slide.
 - Khái niệm không có trong slide đã cho thì ghi slide = "khong_co_can_cu"."""
 
 ATTACK = re.compile(r"bỏ qua (mọi |các )?(hướng dẫn|chỉ dẫn)|ignore (all |previous )?instructions|"
                     r"(viết|làm|giải|code) hộ|in luôn pass|cho nó (in|báo) pass", re.IGNORECASE)
+SLIDE_CODE = re.compile(r"\bDay\d+-s\d+\b")
 TEST_FILE = re.compile(r"(^|/)tests?/|(^|/)test_[^/]*\.py$")
 CONFIRM = re.compile(r"đúng không|phải không|có phải", re.IGNORECASE)
 EDIT_WORDS = re.compile(r"\b(sửa|chỉnh|edit|modify|xoá|xóa)\b", re.IGNORECASE)
@@ -105,6 +107,9 @@ def _kiem(repo: str, lab: str, khai_niem: list, khung: list) -> list:
             nhan = "khong_dung" if f in khung else (c.get("nhan") if c.get("nhan") in ("doc", "sua") else "doc")
             code.append({"file": f, "ham": h, "nhan": nhan})
         slide = str(k.get("slide") or "khong_co_can_cu")
+        m = SLIDE_CODE.search(slide)  # model có lúc chép cả đoạn "[Day13-s14] Chạy lại: ..." → lấy mã
+        if m:
+            slide = m.group(0)
         if slide != "khong_co_can_cu" and not ma_slide_ton_tai(lab, slide):
             note(f"mã slide {slide} không có trong gói kiến thức")
             slide = "khong_co_can_cu"

@@ -11,6 +11,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "codebase"))
 
 import agent
+import ai
 import tools
 import tracing
 
@@ -18,6 +19,12 @@ import tracing
 def _write(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
+
+
+@pytest.fixture(autouse=True)
+def _fake_model(monkeypatch):
+    """Ép chế độ AI giả cho mọi test lõi: .env có key thật cũng không gọi API, không tốn token."""
+    monkeypatch.setattr(ai, "MODEL_PROVIDER", "fake")
 
 
 @pytest.fixture
@@ -191,3 +198,14 @@ def test_prompt_co_todo_va_so_dong(labs, monkeypatch):
     ask("Lab Day99 CP1 rate limit nằm ở đâu?")
     assert "app/rate_limiter.py:check_rate_limit (dòng 2)" in seen["user"]
     assert "app/rate_limiter.py:1: # TODO CP1: viết hàm dưới đây" in seen["user"]
+
+
+def test_buoc_kiem_tach_ma_slide_khi_model_chep_ca_doan(labs, tmp_path):
+    """Model chép cả đoạn "[Day99-s1] nội dung..." vào trường slide → bước 6 tách lấy đúng mã Day99-s1."""
+    _write(tmp_path / "knowledge" / "Day99" / "slides.md", "## Day99-s1\nRate limit là giới hạn số request.\n")
+    model_out = [{"ten": "rate limit", "slide": "[Day99-s1] Rate limit là giới hạn số request.", "ly_do": "x",
+                  "code": [{"file": "app/rate_limiter.py", "ham": "check_rate_limit", "nhan": "sua"}]}]
+    tracing.begin("test")
+    out = agent._kiem(str(labs), "Day99", model_out, [])
+    tracing.end()
+    assert out[0]["slide"] == "Day99-s1"
