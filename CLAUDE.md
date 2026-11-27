@@ -7,6 +7,12 @@
 - Đề + rubric gốc: repo BTC `VinUni-AI20k/K5-L3-Day15-AI-Product-Hackathon` (`README.md`, `01-challenge-brief.md`, `02-guide.md`, `03-rubric.md`, `tracks/track-a-edtech.md`). Data BTC copy ở `data-btc/` (gitignored, không commit).
 - Mốc: **CP1 17:00 27/11** · CP2 19:30 27/11 · CP3 10:00 28/11 · CP4 14:30 28/11 · nộp cuối 23:59 28/11. Nộp checkpoint: https://ai20k-hackathon.pages.dev/#submit
 - Python: dùng `.venv/Scripts/python.exe` (Windows). LLM mặc định: OpenAI, key trong `.env`.
+- **Lõi đã có code** (`codebase/agent.py` + `tools.py`, workflow 6 bước như `spec.md` §4):
+    - đặt `LABS_DIR` trong `.env` = thư mục chứa repo lab (máy Khuê: `C:/Users/MINH KHAI/Documents/VinUni`)
+    - chế độ AI giả dùng ghép dự phòng (khớp tên hàm); nối model thật ở `codebase/ai.py` (`docs/connect-model.md`)
+    - test: `python -m pytest tests/` (pytest chỉ cài trong `.venv`, không thêm vào `requirements.txt`)
+    - Windows in tiếng Việt lỗi encoding thì đặt `PYTHONIOENCODING=utf-8`
+    - tên tool trong `tools.py` phải khớp bảng tool ở `spec.md` §4
 
 ## Hướng đang theo (tạm chốt 27/11, chưa có bằng chứng)
 - **Track A.** Tên tạm: bản đồ bài giảng ↔ code lab theo CP.
