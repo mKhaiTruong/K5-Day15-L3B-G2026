@@ -31,7 +31,7 @@
 - **Gallery format tóm tắt repo:** trùng DeepWiki/GitDiagram; phần AI mờ.
 
 ## Việc tiếp theo
-- **CP1:** đã viết `TEAMS.md` (Track A), `canvas.md`, `evidence/hypothesis.md`, `spec.md` §0–§2 (PR #2, issue #1). Còn thiếu: phân công trong canvas dòng 7 + cột "Phần việc chính" của `TEAMS.md`. Khuê làm lõi.
+- **CP1:** đã viết `TEAMS.md` (Track A), `canvas.md`, `evidence/hypothesis.md`, `spec.md` §0–§2 (PR #2, issue #1). Phân công: Khuê lõi · Khánh benchmark + eval · Phong feature 1 · Đức Anh feature 2 + 3.
 - **Trước CP2:**
     - phỏng vấn ≥3 học viên ngoài team (Mom Test): "lab nào bạn nộp trong 2 tuần qua? khái niệm chính của CP đó nằm ở hàm nào, sao code làm vậy? lần gần nhất bị hỏi về code mình nộp mà không trả lời được là khi nào?"
     - đào data preclass: tỷ lệ học viên tự giải thích lại → `evidence/data-mining.md`

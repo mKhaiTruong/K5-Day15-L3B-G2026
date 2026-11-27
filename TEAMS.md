@@ -11,10 +11,10 @@
 
 | STT | Họ và tên | Mã học viên | Vai trò | Phần việc chính |
 |---|---|---|---|---|
-| 1 | Trương Đặng Minh Khuê | 2A202603785 | Đội trưởng | ____ |
-| 2 | Trịnh Tuấn Phong | 2A202603781 | Thành viên | ____ |
-| 3 | Triệu Quốc Khánh | 2A202603749 | Thành viên | ____ |
-| 4 | Cung Đức Anh | 2A202603814 | Thành viên | ____ |
+| 1 | Trương Đặng Minh Khuê | 2A202603785 | Đội trưởng | Lõi: phân tích repo lab + slide theo CP · nộp checkpoint |
+| 2 | Trịnh Tuấn Phong | 2A202603781 | Thành viên | Feature 1: lộ trình file theo CP + sơ đồ flow / UI |
+| 3 | Triệu Quốc Khánh | 2A202603749 | Thành viên | Benchmark + eval: bộ câu thử, metric, chuẩn "đạt" |
+| 4 | Cung Đức Anh | 2A202603814 | Thành viên | Feature 2 heatmap + feature 3 Feynman |
 
 **Quy tắc điền**
 - **Lớp:** `L3A` hoặc `L3B`. **Track:** một chữ `A` (EdTech), `B` (Y tế), `C` (Du lịch), `D` (Thương mại điện tử), `E` (Tài chính) hoặc `F` (Làn khác). **Link repo:** link GitHub công khai của nhóm.
