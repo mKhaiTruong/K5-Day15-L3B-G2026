@@ -82,3 +82,14 @@ def test_post_json_doc_phan_hoi(monkeypatch):
     monkeypatch.setattr(ai.urllib.request, "urlopen",
                         lambda req, timeout: Resp(json.dumps({"ok": 1}).encode("utf-8")))
     assert ai.post_json(ai.URL_OPENAI, {}, {}) == {"ok": 1}
+
+
+def test_openrouter_gui_dung_url_va_ten_model(openai_mode, monkeypatch):
+    monkeypatch.setattr(ai, "MODEL_PROVIDER", "openrouter")
+    monkeypatch.setattr(ai, "MODEL_NAME", "openai/gpt-5-mini")
+    r = ai.call_model("Trả về JSON.", "Lab Day13 CP1")
+    assert openai_mode["url"] == "https://openrouter.ai/api/v1/chat/completions"
+    assert openai_mode["headers"]["Authorization"] == "Bearer sk-test"
+    assert openai_mode["body"]["model"] == "openai/gpt-5-mini"
+    assert openai_mode["body"]["response_format"] == {"type": "json_object"}
+    assert r == {"text": '{"khai_niem": []}', "model": "openai/gpt-5-mini", "tokens_in": 120, "tokens_out": 30}

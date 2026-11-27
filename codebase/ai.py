@@ -26,6 +26,7 @@ from tracing import model_call
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 URL_OPENAI = "https://api.openai.com/v1/chat/completions"
+URL_OPENROUTER = "https://openrouter.ai/api/v1/chat/completions"  # cùng định dạng request / usage với OpenAI
 SHOW_RAW = False  # True = in nguyên phản hồi API khi cần dò tên trường
 
 
@@ -67,15 +68,15 @@ def post_json(url: str, headers: dict, body: dict, timeout: int = 60) -> dict:
     return data
 
 
-def call_openai(system: str, user: str) -> dict:
-    """Gọi OpenAI Chat Completions, ép model trả JSON.
+def call_openai(system: str, user: str, url: str = URL_OPENAI) -> dict:
+    """Gọi API kiểu OpenAI Chat Completions (OpenAI hoặc OpenRouter), ép model trả JSON.
 
     Returns:
         Dict gồm "text", "tokens_in", "tokens_out". Token lấy từ trường usage của API,
         tokens_out đã gồm cả token suy luận.
     """
     messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": user}]
-    data = post_json(URL_OPENAI, {"Authorization": "Bearer " + API_KEY},
+    data = post_json(url, {"Authorization": "Bearer " + API_KEY},
                      {"model": MODEL_NAME, "messages": messages,
                       "response_format": {"type": "json_object"}})
     u = data["usage"]
@@ -98,6 +99,8 @@ def call_model(system: str, user: str) -> dict:
         return {"text": "[câu trả lời giả — chưa nối model] " + last[:60], "model": "fake", "tokens_in": 0, "tokens_out": 0}
     if MODEL_PROVIDER == "openai":
         r = call_openai(system, user)
+    elif MODEL_PROVIDER == "openrouter":
+        r = call_openai(system, user, url=URL_OPENROUTER)
     else:
         raise NotImplementedError(
             f"chưa có nhánh gọi cho MODEL_PROVIDER={MODEL_PROVIDER} trong codebase/ai.py — xem docs/connect-model.md")
