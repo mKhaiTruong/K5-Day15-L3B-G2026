@@ -163,3 +163,27 @@ def bao_cao_markdown(
         cp_label = item["cp"] or "—"
         lines.append(f"| {item['lab']} | {cp_label} | {item['khai_niem']} | {item['badge']} |")
     return "\n".join(lines)
+
+
+def main() -> int:
+    """Chạy xem nhanh báo cáo heatmap trên terminal: python codebase/f2_heatmap.py [--lab Day14]."""
+    import argparse
+    import sys
+
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+    parser = argparse.ArgumentParser(description="Heatmap khái niệm lớp kẹt nhất (ẩn danh)")
+    parser.add_argument("--lab", default=None, help="Lọc theo mã lab, vd Day14")
+    parser.add_argument("--log", default=None, help="Đường dẫn tới cau_hoi.jsonl")
+    args = parser.parse_args()
+    print(bao_cao_markdown(lab=args.lab, log_path=args.log))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
