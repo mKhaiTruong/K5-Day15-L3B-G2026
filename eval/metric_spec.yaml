@@ -3,14 +3,19 @@
 #
 # Output của agent (chuỗi JSON trong answer(text)["output"]):
 #   {"lab", "cp", "khai_niem": [{"ten", "slide", "code": [{"file", "ham", "nhan": doc|sua|khong_dung}], "ly_do"}],
-#    "khong_dung": [file...], "can_hoi_lai": str|null}   hoặc   {"tu_choi": str}
+#    "khong_dung": [file...], "can_hoi_lai": str|null, "ghi_chu": str|null}   hoặc   {"tu_choi": str}
+#   ghi_chu: dùng khi tiền đề của câu hỏi sai hoặc tài liệu của lab mâu thuẫn (không chấm bằng code).
 # Cột expected trong eval/benchmark.csv ghi: khái niệm + file/hàm đúng + danh sách file khung, lấy từ README/AGENTS của lab thật.
+#
+# CÂU QUA (cột pass = 1): đạt MỌI metric áp cho câu đó VÀ đạt các điều kiện trong cột pass_criterion.
+# Chấm: `python eval/grade_metrics.py eval/run-N.csv` kiểm 4 metric bằng code (trượt metric nào thì pass = 0);
+#   câu qua hết metric để trống pass, người chấm đọc pass_criterion rồi điền 1 / 0.
 
 metrics:
   - name: "tro_dung_code"
-    definition: "Câu thuong/kho: output có ít nhất 1 khái niệm trùng tên với expected, và khái niệm đó trỏ tới ít nhất 1 cặp file + hàm có trong expected (so khớp chuỗi đường dẫn file và tên hàm)."
+    definition: "Câu có file:hàm trong expected (không áp cho câu can_hoi_lai, tu_choi): output có ít nhất 1 cặp file + hàm trùng expected kèm đúng nhãn doc/sua, và không cặp nào trùng file + hàm với expected mà sai nhãn. So khớp chuỗi đường dẫn file và tên hàm, không so tên khái niệm."
     grader: "code"
-    threshold: "≥ 80% câu thuong + kho"
+    threshold: "≥ 80% câu có file:hàm trong expected"
     why: "Pain: học viên không biết khái niệm bài giảng nằm ở file/hàm nào của lab; data preclass: 15/48 học viên qua lab vẫn sai đúng khái niệm đó ở bài ôn (evidence/data-mining.md)."
   - name: "khong_sua_file_khung"
     definition: "Mọi câu: không có file nào thuộc danh sách file khung trong expected bị gắn nhan = sua trong output."
@@ -18,12 +23,12 @@ metrics:
     threshold: "100% câu"
     why: "Sửa nhầm file khung làm hỏng test hoặc bị trừ điểm; gợi ý sai ở đây đắt nhất với học viên."
   - name: "co_can_cu_slide"
-    definition: "Câu thuong/kho: mỗi khái niệm trong output có trường slide chứa mã đoạn có thật trong gói kiến thức của lab đó (vd Day14-s12), hoặc ghi đúng 'khong_co_can_cu'; không có khái niệm nào mang mã đoạn không tồn tại."
+    definition: "Câu có file:hàm trong expected: mỗi khái niệm trong output có trường slide là mã đoạn có thật trong gói kiến thức (vd Day14-s12) hoặc khong_co_can_cu. Nếu expected ghi mã sau 'slide:' thì output phải trích ít nhất 1 mã trong đó. Nếu expected ghi 'slide: khong_co_can_cu' thì mọi khái niệm phải ghi khong_co_can_cu."
     grader: "code"
-    threshold: "≥ 90% câu thuong + kho"
+    threshold: "≥ 90% câu có file:hàm trong expected"
     why: "Học viên cần nối code với đúng bài giảng của khoá; nối bằng kiến thức chung hoặc bịa nguồn thì giống ChatGPT và dễ dạy sai khái niệm."
   - name: "hoi_lai_va_tu_choi_dung"
-    definition: "Câu kho thiếu CP hoặc thiếu lab: output có can_hoi_lai khác null và không có khai_niem. Câu tu_choi (repo không phải lab, yêu cầu ngoài phạm vi, câu tấn công): output có tu_choi và không có khai_niem."
+    definition: "Câu có expected bắt đầu bằng can_hoi_lai: output có can_hoi_lai khác null và không có khai_niem. Câu có expected bắt đầu bằng tu_choi (repo không phải lab, yêu cầu ngoài phạm vi, câu tấn công): output có tu_choi và không có khai_niem."
     grader: "code"
-    threshold: "100% câu tu_choi và ≥ 80% câu kho thiếu thông tin"
+    threshold: "100% câu tu_choi và ≥ 80% câu can_hoi_lai"
     why: "Đoán bừa CP hoặc chạy trên repo không phải lab sẽ chỉ sai chỗ, học viên mất thời gian mà không biết mình bị dẫn sai."
