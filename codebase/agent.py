@@ -14,8 +14,16 @@ import json
 import re
 
 from ai import call_model
-from tools import (doc_cau_truc_lab, doc_cp, ghi_cau_hoi_an_danh, kiem_ham_ton_tai, ma_slide_ton_tai,
-                   tim_file_khung, tim_repo, tim_slide)
+from tools import (
+    doc_cau_truc_lab,
+    doc_cp,
+    ghi_cau_hoi_an_danh,
+    kiem_ham_ton_tai,
+    ma_slide_ton_tai,
+    tim_file_khung,
+    tim_repo,
+    tim_slide,
+)
 from tracing import note
 
 SYSTEM = """Bạn giúp học viên AI20K nối khái niệm của bài giảng với code của bài lab.
@@ -28,9 +36,10 @@ Trả về DUY NHẤT một JSON:
 - Khái niệm không có trong slide đã cho thì ghi slide = "khong_co_can_cu"."""
 
 ATTACK = re.compile(r"bỏ qua (mọi |các )?(hướng dẫn|chỉ dẫn)|ignore (all |previous )?instructions|"
-                    r"(viết|làm|giải|code) hộ|in luôn pass|cho nó (in|báo) pass", re.I)
+                    r"(viết|làm|giải|code) hộ|in luôn pass|cho nó (in|báo) pass", re.IGNORECASE)
 TEST_FILE = re.compile(r"(^|/)tests?/|(^|/)test_[^/]*\.py$")
-EDIT_WORDS = re.compile(r"\b(sửa|chỉnh|edit|modify|xoá|xóa)\b", re.I)
+CONFIRM = re.compile(r"đúng không|phải không|có phải", re.IGNORECASE)
+EDIT_WORDS = re.compile(r"\b(sửa|chỉnh|edit|modify|xoá|xóa)\b", re.IGNORECASE)
 STOP = {"code", "file", "files", "repo", "trong", "giúp", "mình", "muốn", "khác", "nhau", "những",
         "được", "nằm", "đâu", "này", "check", "với", "chỗ", "nào", "hiểu", "lab", "của"}
 
@@ -41,11 +50,11 @@ def _out(obj: dict) -> dict:
 
 def _parse(text: str) -> dict:
     """Tách mã lab, mã CP, tên repo từ câu của học viên."""
-    lab = re.search(r"\bday\s?0?(\d{1,2})\b", text, re.I)
-    cp = re.search(r"\bCP\s?(\d+)\b", text, re.I)
-    repo = re.search(r"\brepo\s+([\w.-]+)", text, re.I)
-    return {"lab": "Day%02d" % int(lab.group(1)) if lab else "",
-            "cp": "CP%s" % cp.group(1) if cp else "",
+    lab = re.search(r"\bday\s?0?(\d{1,2})\b", text, re.IGNORECASE)
+    cp = re.search(r"\bCP\s?(\d+)\b", text, re.IGNORECASE)
+    repo = re.search(r"\brepo\s+([\w.-]+)", text, re.IGNORECASE)
+    return {"lab": f"Day{int(lab.group(1)):02d}" if lab else "",
+            "cp": f"CP{cp.group(1)}" if cp else "",
             "ten_repo": repo.group(1) if repo else ""}
 
 
@@ -68,7 +77,7 @@ def _ghep_du_phong(text: str, ham: list) -> list:
 
 
 def _parse_json(text: str):
-    m = re.search(r"\{.*\}", text or "", re.S)
+    m = re.search(r"\{.*\}", text or "", re.DOTALL)
     if not m:
         return None
     try:
@@ -88,13 +97,13 @@ def _kiem(repo: str, lab: str, khai_niem: list, khung: list) -> list:
         for c in k.get("code") or []:
             f, h = str(c.get("file", "")), str(c.get("ham", ""))
             if not kiem_ham_ton_tai(repo, f, h):
-                note("bỏ %s:%s — không có trong repo" % (f, h))
+                note(f"bỏ {f}:{h} — không có trong repo")
                 continue
             nhan = "khong_dung" if f in khung else (c.get("nhan") if c.get("nhan") in ("doc", "sua") else "doc")
             code.append({"file": f, "ham": h, "nhan": nhan})
         slide = str(k.get("slide") or "khong_co_can_cu")
         if slide != "khong_co_can_cu" and not ma_slide_ton_tai(lab, slide):
-            note("mã slide %s không có trong gói kiến thức" % slide)
+            note(f"mã slide {slide} không có trong gói kiến thức")
             slide = "khong_co_can_cu"
         if code:
             out.append({"ten": str(k["ten"]), "slide": slide, "code": code, "ly_do": str(k.get("ly_do", ""))})
@@ -116,19 +125,26 @@ def answer(text: str) -> dict:
                                 % (p["lab"] or p["ten_repo"])})
     info = doc_cau_truc_lab(repo)
     if not info["la_lab"]:
-        return _out({"tu_choi": "Repo này không phải repo lab (%s), mình không hỗ trợ." % info["ly_do"]})
+        return _out({"tu_choi": "Repo này không phải repo lab ({}), mình không hỗ trợ.".format(info["ly_do"])})
 
-    # Bước 2: đã rõ CP chưa (G10)
-    if not p["cp"] or (info["cps"] and p["cp"] not in info["cps"]):
+    # Bước 2: đã rõ CP chưa (G10). Lab không chia CP thì đi tiếp với cả repo.
+    if info["cps"] and (not p["cp"] or p["cp"] not in info["cps"]):
         return _out({"lab": p["lab"], "cp": p["cp"] or None, "khai_niem": [], "khong_dung": [],
-                     "can_hoi_lai": "Bạn đang làm CP nào? Lab này có: %s" % ", ".join(info["cps"])})
+                     "can_hoi_lai": "Bạn đang làm CP nào? Lab này có: {}".format(", ".join(info["cps"]))})
 
     # Bước 3: đọc CP + file khung; chặn câu đòi sửa file khung
     khung = tim_file_khung(repo)
-    if EDIT_WORDS.search(text) and any(k.rsplit("/", 1)[-1].lower() in text.lower() for k in khung):
-        return _out({"tu_choi": "File bạn nhắc là file khung, đề ghi không được sửa. "
-                                "Phần việc của bạn nằm ở các TODO của CP; mình chỉ chỗ đó được.",
-                     "khong_dung": khung})
+    ghi_chu = None
+    nhac_khung = [k for k in khung if k.rsplit("/", 1)[-1].lower() in text.lower()]
+    if EDIT_WORDS.search(text) and nhac_khung:
+        if not CONFIRM.search(text):  # đòi sửa file khung → từ chối
+            return _out({"tu_choi": "File bạn nhắc là file khung, đề ghi không được sửa. "
+                                    "Phần việc của bạn nằm ở các TODO của CP; mình chỉ chỗ đó được.",
+                         "khong_dung": khung})
+        # hỏi xác nhận ("sửa file đó đúng không?") → tiền đề sai, trả lời tiếp kèm ghi chú
+        ghi_chu = "{} là file khung, không sửa; xem các file được gắn nhãn sua bên dưới.".format(", ".join(nhac_khung))
+    if not info["cps"]:
+        p["cp"] = ""
     cp_info = doc_cp(repo, p["cp"])
     ham = [h for h in cp_info["ham"] if h["file"] not in khung and not TEST_FILE.search(h["file"])]
 
@@ -136,11 +152,11 @@ def answer(text: str) -> dict:
     slides = tim_slide(p["lab"], text)
 
     # Bước 5: model ghép khái niệm ↔ code
-    user = "Câu của học viên:\n%s\n\nMô tả CP:\n%s\n\nHàm của CP:\n%s\n\nFile khung:\n%s\n\nSlide:\n%s" % (
+    user = "Câu của học viên:\n{}\n\nMô tả CP:\n{}\n\nHàm của CP:\n{}\n\nFile khung:\n{}\n\nSlide:\n{}".format(
         text, cp_info["mo_ta"][:1500],
-        "\n".join("%s:%s" % (h["file"], h["ham"]) for h in ham) or "(không có)",
+        "\n".join("{}:{}".format(h["file"], h["ham"]) for h in ham) or "(không có)",
         "\n".join(khung) or "(không có)",
-        "\n".join("[%s] %s" % (s["ma"], s["text"]) for s in slides) or "(chưa có slide)")
+        "\n".join("[{}] {}".format(s["ma"], s["text"]) for s in slides) or "(chưa có slide)")
     reply = call_model(SYSTEM, user)
     khai_niem = _parse_json(reply["text"])
     if khai_niem is None:
@@ -150,6 +166,7 @@ def answer(text: str) -> dict:
     # Bước 6: kiểm bằng code
     khai_niem = _kiem(repo, p["lab"], khai_niem, khung)
     ghi_cau_hoi_an_danh(p["lab"], p["cp"], [k["ten"] for k in khai_niem])
-    return _out({"lab": p["lab"], "cp": p["cp"], "khai_niem": khai_niem, "khong_dung": khung,
-                 "can_hoi_lai": None if khai_niem else "Mình chưa thấy khái niệm này trong CP %s. "
-                                                        "Bạn hỏi cụ thể hơn được không?" % p["cp"]})
+    return _out({"lab": p["lab"], "cp": p["cp"] or None, "khai_niem": khai_niem, "khong_dung": khung,
+                 "ghi_chu": ghi_chu,
+                 "can_hoi_lai": None if khai_niem else "Mình chưa thấy khái niệm này trong %s. "
+                                                        "Bạn hỏi cụ thể hơn được không?" % (p["cp"] or p["lab"])})

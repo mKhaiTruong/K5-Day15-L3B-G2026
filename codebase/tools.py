@@ -13,11 +13,11 @@ import json
 import os
 import re
 
-from tracing import tool, TOOLS  # noqa: F401
+from tracing import TOOLS, tool  # noqa: F401
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache"}
-KHUNG_PATTERN = re.compile(r"không\s+(được\s+)?sửa|khong\s+sua|do\s+not\s+(edit|modify)|đừng\s+sửa", re.I)
+KHUNG_PATTERN = re.compile(r"không\s+(được\s+)?sửa|khong\s+sua|do\s+not\s+(edit|modify)|đừng\s+sửa", re.IGNORECASE)
 FILE_TOKEN = re.compile(r"[\w./-]+\.(?:py|md|csv|yaml|yml|json|toml|txt|sh)\b")
 
 
@@ -80,7 +80,7 @@ def tim_repo(lab: str = "", ten_repo: str = "") -> str:
             return hits[0]
     if lab:
         num = re.sub(r"\D", "", lab)
-        pat = re.compile(r"day[\s_-]?0?%s(?!\d)" % num, re.I)
+        pat = re.compile(rf"day[\s_-]?0?{num}(?!\d)", re.IGNORECASE)
         hits = [d for d in dirs if pat.search(os.path.basename(d))]
         # ưu tiên thư mục trông giống repo lab (có CHECKPOINTS / README)
         hits.sort(key=lambda d: (not os.path.exists(os.path.join(d, "CHECKPOINTS.md")),
@@ -116,35 +116,60 @@ def doc_cau_truc_lab(repo: str) -> dict:
         ly_do = "không có rubric hay test"
     else:
         ly_do = "có README, checkpoint, rubric/test"
-    return {"la_lab": la_lab, "ly_do": ly_do, "files": files[:300], "cps": ["CP%s" % c for c in cps]}
+    return {"la_lab": la_lab, "ly_do": ly_do, "files": files[:300], "cps": [f"CP{c}" for c in cps]}
 
 
 @tool
 def doc_cp(repo: str, cp: str) -> dict:
     """Đọc mô tả một CP và các file / hàm Python thuộc phần việc của CP đó.
 
-    Input: repo, mã CP ("CP5"). Output: {"mo_ta": str, "ham": [{"file", "ham"}]}; mo_ta rỗng nếu không có CP.
-    Hàm lấy từ file .py được nhắc trong đoạn CP, hoặc nằm trong thư mục được nhắc.
+    Input: repo, mã CP ("CP5"; rỗng = lab không chia CP). Output: {"mo_ta": str, "ham": [{"file", "ham"}]};
+    mo_ta rỗng nếu không có CP đó.
+    Hàm lấy từ file .py được nhắc trong đoạn CP, hoặc nằm trong thư mục được nhắc. Với thư mục, nếu README
+    của thư mục ghi "TODO" cạnh tên file thì chỉ lấy các file đó (bỏ app phụ trùng tên ở thư mục con khác).
+    Lab không chia CP: mô tả = README, hàm = mọi file .py của repo.
     Không tác động ra ngoài.
     """
+    if not cp:
+        files = [f for f in _walk_files(repo, 3) if f.endswith(".py")]
+        return {"mo_ta": _read(os.path.join(repo, "README.md"))[:3000], "ham": _list_functions(repo, files)}
     text = _read(os.path.join(repo, "CHECKPOINTS.md")) or _read(os.path.join(repo, "README.md"))
     num = re.sub(r"\D", "", cp)
-    m = re.search(r"^#+[^\n]*\bCP\s?%s\b.*?(?=^#+[^\n]*\bCP\s?\d+\b|\Z)" % num, text, re.M | re.S)
+    m = re.search(rf"^#+[^\n]*\bCP\s?{num}\b.*?(?=^#+[^\n]*\bCP\s?\d+\b|\Z)", text, re.MULTILINE | re.DOTALL)
     mo_ta = m.group(0).strip() if m else ""
     refs = {a or b for a, b in re.findall(r"`([^`]+)`|\]\(([^)\s]+)\)", mo_ta)}
     py_files = []
     for ref in refs:
         ref = ref.strip().rstrip("/")
         path = os.path.join(repo, ref)
+        if ref.lower().endswith("readme.md") and os.path.isfile(path):
+            ref = os.path.dirname(ref)
+            path = os.path.join(repo, ref)
+            if not ref:
+                continue
         if os.path.isdir(path):
-            py_files += [ref + "/" + f for f in _walk_files(path, 3) if f.endswith(".py")]
+            py_files += _files_in_scope(repo, ref)
         elif ref.endswith(".py") and os.path.isfile(path):
             py_files.append(ref)
-        elif ref.lower().endswith("readme.md") and os.path.isfile(path):
-            folder = os.path.dirname(ref)
-            if folder:
-                py_files += [folder + "/" + f for f in _walk_files(os.path.join(repo, folder), 3)
-                             if f.endswith(".py")]
+    return {"mo_ta": mo_ta[:3000], "ham": _list_functions(repo, py_files)}
+
+
+def _files_in_scope(repo: str, folder: str) -> list:
+    """File .py thuộc phần việc trong `folder`: ưu tiên file README của folder ghi TODO, không có thì lấy hết."""
+    all_py = [folder + "/" + f for f in _walk_files(os.path.join(repo, folder), 3) if f.endswith(".py")]
+    readme = _read(os.path.join(repo, folder, "README.md"))
+    todo_names = {os.path.basename(t) for line in readme.splitlines() if "TODO" in line
+                  for t in FILE_TOKEN.findall(line) if t.endswith(".py")}
+    picked = []
+    for name in todo_names:
+        same = sorted((f for f in all_py if os.path.basename(f) == name), key=lambda f: f.count("/"))
+        if same:
+            picked.append(same[0])  # trùng tên thì lấy file nông nhất (app chính, không phải app phụ)
+    return picked or all_py
+
+
+def _list_functions(repo: str, py_files: list) -> list:
+    """Liệt kê hàm public cấp module trong các file .py (đọc bằng ast)."""
     ham = []
     for rel in sorted(set(py_files)):
         try:
@@ -154,7 +179,7 @@ def doc_cp(repo: str, cp: str) -> dict:
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_"):
                 ham.append({"file": rel, "ham": node.name})
-    return {"mo_ta": mo_ta[:3000], "ham": ham[:200]}
+    return ham[:200]
 
 
 @tool
@@ -169,9 +194,10 @@ def tim_file_khung(repo: str) -> list:
             continue
         folder = os.path.dirname(rel)
         for line in _read(os.path.join(repo, rel)).splitlines():
-            if not KHUNG_PATTERN.search(line):
-                continue
-            for token in FILE_TOKEN.findall(line):
+            # chỉ lấy file nằm cùng mệnh đề với "không sửa" (tách theo ". " và ";"),
+            # để "File được sửa: `a.py`. Không sửa file CSV." không coi a.py là file khung
+            clauses = [c for c in re.split(r"\.\s+|;", line) if KHUNG_PATTERN.search(c)]
+            for token in (t for c in clauses for t in FILE_TOKEN.findall(c)):
                 token = token.lstrip("./")
                 for cand in ((folder + "/" + token) if folder else token, token):
                     if os.path.isfile(os.path.join(repo, cand)):
@@ -192,8 +218,8 @@ def tim_slide(lab: str, khai_niem: str) -> list:
         return []
     words = [w for w in re.findall(r"\w+", khai_niem.lower()) if len(w) > 2]
     out = []
-    pattern = r"^##\s*(%s-s\d+)\s*$(.*?)(?=^##\s|\Z)" % re.escape(lab)
-    for m in re.finditer(pattern, text, re.M | re.S | re.I):
+    pattern = rf"^##\s*({re.escape(lab)}-s\d+)\s*$(.*?)(?=^##\s|\Z)"
+    for m in re.finditer(pattern, text, re.MULTILINE | re.DOTALL | re.IGNORECASE):
         body = m.group(2).strip()
         if words and any(w in body.lower() for w in words):
             out.append({"ma": m.group(1), "text": body[:600]})
@@ -207,7 +233,7 @@ def ma_slide_ton_tai(lab: str, ma: str) -> bool:
     Input: lab, mã đoạn ("Day14-s12"). Output: True / False. Không tác động ra ngoài.
     """
     text = _read(os.path.join(_knowledge_dir(), lab, "slides.md"))
-    return bool(ma) and re.search(r"^##\s*%s\s*$" % re.escape(ma), text, re.M | re.I) is not None
+    return bool(ma) and re.search(rf"^##\s*{re.escape(ma)}\s*$", text, re.MULTILINE | re.IGNORECASE) is not None
 
 
 @tool
