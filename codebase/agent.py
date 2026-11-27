@@ -10,10 +10,12 @@ Hình dạng: workflow cố định 6 bước, AI chỉ làm bước 5 (ghép kh
 
 Hợp đồng: answer(text) -> {"output": str}; output là chuỗi JSON theo format ở đầu eval/metric_spec.yaml.
 """
+import hashlib
 import json
+import os
 import re
 
-from ai import call_model
+from ai import MODEL_NAME, call_model
 from tools import (
     doc_cau_truc_lab,
     doc_cp,
@@ -36,10 +38,12 @@ Trả về DUY NHẤT một JSON:
   Dòng TODO đứng ngay trên các hàm (vd "TODO CP1: viết ba hàm dưới đây") áp cho các hàm ngay sau nó, đếm theo số dòng.
 - Nhãn "doc" nếu học viên chỉ cần đọc hoặc gọi lại hàm có sẵn.
 - Không bao giờ gắn nhãn "sua" cho file trong "File khung".
+- Trường "slide" chỉ ghi mã đoạn (vd "Day13-s12"), không chép nội dung slide.
 - Khái niệm không có trong slide đã cho thì ghi slide = "khong_co_can_cu"."""
 
 ATTACK = re.compile(r"bỏ qua (mọi |các )?(hướng dẫn|chỉ dẫn)|ignore (all |previous )?instructions|"
                     r"(viết|làm|giải|code) hộ|in luôn pass|cho nó (in|báo) pass", re.IGNORECASE)
+SLIDE_CODE = re.compile(r"\bDay\d+-s\d+\b")
 TEST_FILE = re.compile(r"(^|/)tests?/|(^|/)test_[^/]*\.py$")
 CONFIRM = re.compile(r"đúng không|phải không|có phải", re.IGNORECASE)
 EDIT_WORDS = re.compile(r"\b(sửa|chỉnh|edit|modify|xoá|xóa)\b", re.IGNORECASE)
@@ -90,6 +94,33 @@ def _parse_json(text: str):
     return data.get("khai_niem") if isinstance(data, dict) and isinstance(data.get("khai_niem"), list) else None
 
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _goi_model(system: str, user: str) -> str:
+    """Gọi model ở bước 5, dùng lại kết quả cũ khi bật CACHE=1 và prompt giống hệt.
+
+    Key = sha256(model + system + user): repo, CP, slide hay câu hỏi đổi thì prompt đổi, tự gọi lại model.
+    Chỉ lưu khi model trả JSON hợp lệ. Cache ghi file trong CACHE_DIR (mặc định data/cache, gitignored).
+
+    Returns:
+        Chữ model trả về (từ cache hoặc từ lần gọi mới).
+    """
+    on = os.environ.get("CACHE") == "1"
+    key = hashlib.sha256(f"{MODEL_NAME}\n{system}\n{user}".encode()).hexdigest()
+    path = os.path.join(os.environ.get("CACHE_DIR") or os.path.join(ROOT, "data", "cache"), key + ".json")
+    if on and os.path.exists(path):
+        note("cache: dùng lại kết quả bước 5, không gọi model")
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)["text"]
+    text = call_model(system, user)["text"]
+    if on and _parse_json(text) is not None:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"model": MODEL_NAME, "text": text}, f, ensure_ascii=False)
+    return text
+
+
 def _kiem(repo: str, lab: str, khai_niem: list, khung: list) -> list:
     """Bước 6: bỏ hàm không có thật, sửa mã slide bịa, ép nhãn khong_dung cho file khung."""
     out = []
@@ -105,6 +136,9 @@ def _kiem(repo: str, lab: str, khai_niem: list, khung: list) -> list:
             nhan = "khong_dung" if f in khung else (c.get("nhan") if c.get("nhan") in ("doc", "sua") else "doc")
             code.append({"file": f, "ham": h, "nhan": nhan})
         slide = str(k.get("slide") or "khong_co_can_cu")
+        m = SLIDE_CODE.search(slide)  # model có lúc chép cả đoạn "[Day13-s14] Chạy lại: ..." → lấy mã
+        if m:
+            slide = m.group(0)
         if slide != "khong_co_can_cu" and not ma_slide_ton_tai(lab, slide):
             note(f"mã slide {slide} không có trong gói kiến thức")
             slide = "khong_co_can_cu"
@@ -163,8 +197,7 @@ def answer(text: str) -> dict:
         or "(không có)",
         "\n".join(khung) or "(không có)",
         "\n".join("[{}] {}".format(s["ma"], s["text"]) for s in slides) or "(chưa có slide)")
-    reply = call_model(SYSTEM, user)
-    khai_niem = _parse_json(reply["text"])
+    khai_niem = _parse_json(_goi_model(SYSTEM, user))
     if khai_niem is None:
         note("model không trả JSON — dùng ghép dự phòng")
         khai_niem = _ghep_du_phong(text, ham)

@@ -132,8 +132,23 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 (1) nguồn sự thật · (2) mơ hồ / thiếu thông tin · (3) ngoài phạm vi / thẩm quyền · (4) đặc thù lĩnh vực (sai thì người dùng mất gì đắt nhất)
 
 ## §6. Bốn đường đi của trải nghiệm
-- Mọi thứ suôn sẻ: · Không chắc (lớp 2): · Không có căn cứ (lớp 1): · Người dùng sửa:
-- Bị đòi ngoài phạm vi (lớp 3): · Trường hợp đặc thù lĩnh vực (lớp 4):
+- **Mọi thứ suôn sẻ:** học viên ghi rõ lab + CP (vd "Lab Day13 CP1 chi phí mỗi việc thành công nằm ở hàm nào?") → nhận bản đồ: mỗi khái niệm kèm mã slide (`Day13-s12`), `file:hàm` có nhãn `sua` / `doc`, và danh sách file khung `khong_dung`. Làm tiếp: mở đúng hàm, hoặc xem lộ trình file (feature 1).
+- **Không chắc (lớp 2):** không đoán, hỏi lại đúng chỗ thiếu.
+    - thiếu lab → "Bạn đang làm lab ngày mấy (vd Day14) và CP nào?"
+    - thiếu CP hoặc CP không có → liệt kê các CP có trong `CHECKPOINTS.md` để chọn
+    - không ghép được khái niệm nào → "Mình chưa thấy khái niệm này trong CP1. Bạn hỏi cụ thể hơn được không?"
+- **Không có căn cứ (lớp 1):** nói thẳng là không có, không bịa.
+    - khái niệm không có trong gói slide → `slide = khong_co_can_cu`, vẫn trỏ code nhưng ghi rõ không có căn cứ bài giảng
+    - hàm hoặc mã slide do model bịa → bước 6 kiểm bằng code (`kiem_ham_ton_tai`, `ma_slide_ton_tai`), bỏ hàm bịa, mã bịa đổi thành `khong_co_can_cu`
+    - lab chưa có trong hệ thống → từ chối: "Chưa có DayNN trong hệ thống"
+- **Người dùng sửa:** học viên thấy sai thì hỏi lại cụ thể hơn (nêu tên hàm / khái niệm). Câu có tiền đề sai (vd "sửa `grader.py` đúng không?") → vẫn trả bản đồ, kèm `ghi_chu` chỉ ra đó là file khung. *Chưa có:* nút báo sai, lưu phản hồi; heatmap chỉ ghi câu hỏi gộp ẩn danh.
+- **Bị đòi ngoài phạm vi (lớp 3):** từ chối và chỉ đường quay lại việc học.
+    - đòi viết hộ code CP, lách script chấm, "bỏ qua hướng dẫn" → "Mình chỉ chỉ đường và giải thích, không làm hộ bài hay lách script chấm."
+    - đòi sửa file khung → từ chối, kèm danh sách `khong_dung` và chỉ về các TODO của CP
+    - repo không phải lab → từ chối, nêu lý do (không có README / CHECKPOINTS / rubric)
+- **Trường hợp đặc thù lĩnh vực (lớp 4):** sai đắt nhất là chỉ học viên sửa nhầm file khung (hỏng test, mất điểm) hoặc gắn nhầm nhãn `doc` / `sua` (học viên bỏ sót hàm phải viết).
+    - file khung → bước 6 ép nhãn `khong_dung` bằng code, model nói gì cũng không đổi được; file test bị loại khỏi danh sách hàm
+    - nhãn `sua` → model được đưa dòng `TODO` của đúng CP + số dòng hàm; vẫn có thể sai, đo bằng metric `tro_dung_code`
 
 ## §7. Đánh giá & chuẩn "đạt" *(guide 2.4, 4.1)*
 - Data card: `data/DATA_CARD.md` · bộ câu thử: `eval/benchmark.csv` — 18 câu (thuong 7 · kho 7 · tu_choi 4) · metric: `eval/metric_spec.yaml` (4 metric: tro_dung_code · khong_sua_file_khung · co_can_cu_slide · hoi_lai_va_tu_choi_dung)
