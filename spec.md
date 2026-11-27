@@ -75,10 +75,12 @@ flowchart TD
 
   | Công cụ | Input | Output | Tác động ra ngoài? |
   |---|---|---|---|
+  | `tim_repo` | mã lab (`Day14`) hoặc tên repo | đường dẫn repo trong `LABS_DIR`, rỗng nếu không có | Không |
   | `doc_cau_truc_lab` | đường dẫn repo | cây file, nội dung README / CHECKPOINTS, `la_lab` (bool) | Không |
   | `doc_cp` | repo, mã CP | đoạn mô tả CP + file có `TODO` của CP | Không |
   | `tim_file_khung` | repo | danh sách file ghi "không sửa" trong README / AGENTS | Không |
   | `tim_slide` | lab, khái niệm | đoạn slide + mã đoạn (`DayNN-s<trang>`) hoặc rỗng | Không |
+  | `ma_slide_ton_tai` | lab, mã đoạn | có / không (bước 6 dùng để bắt mã slide bịa) | Không |
   | `kiem_ham_ton_tai` | repo, file, hàm | có / không | Không |
   | `ghi_cau_hoi_an_danh` | lab, CP, khái niệm | đã ghi (không lưu mã học viên) | Có: ghi dữ liệu thống kê |
 
