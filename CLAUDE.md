@@ -7,6 +7,12 @@
 - Đề + rubric gốc: repo BTC `VinUni-AI20k/K5-L3-Day15-AI-Product-Hackathon` (`README.md`, `01-challenge-brief.md`, `02-guide.md`, `03-rubric.md`, `tracks/track-a-edtech.md`). Data BTC copy ở `data-btc/` (gitignored, không commit).
 - Mốc: **CP1 17:00 27/11** · CP2 19:30 27/11 · CP3 10:00 28/11 · CP4 14:30 28/11 · nộp cuối 23:59 28/11. Nộp checkpoint: https://ai20k-hackathon.pages.dev/#submit
 - Python: dùng `.venv/Scripts/python.exe` (Windows). LLM mặc định: OpenAI, key trong `.env`.
+- **Lõi đã có code** (`codebase/agent.py` + `tools.py`, workflow 6 bước như `spec.md` §4):
+    - đặt `LABS_DIR` trong `.env` = thư mục chứa repo lab (máy Khuê: `C:/Users/MINH KHAI/Documents/VinUni`)
+    - chế độ AI giả dùng ghép dự phòng (khớp tên hàm); nối model thật ở `codebase/ai.py` (`docs/connect-model.md`)
+    - test: `python -m pytest tests/` (pytest chỉ cài trong `.venv`, không thêm vào `requirements.txt`)
+    - Windows in tiếng Việt lỗi encoding thì đặt `PYTHONIOENCODING=utf-8`
+    - tên tool trong `tools.py` phải khớp bảng tool ở `spec.md` §4
 
 ## Hướng đang theo (tạm chốt 27/11, chưa có bằng chứng)
 - **Track A.** Tên tạm: bản đồ bài giảng ↔ code lab theo CP.
@@ -37,6 +43,19 @@
     - đào data preclass: tỷ lệ học viên tự giải thích lại → `evidence/data-mining.md`
     - hỏi 1–2 mentor xem họ có biết lớp hổng khái niệm nào không
     - pain không thật → đổi hướng trước CP2
+
+## Benchmark (Khánh) — cách viết câu thử
+- **Format output của lõi + 4 metric:** xem đầu `eval/metric_spec.yaml`. Cột `expected` ghi theo đúng format đó: khái niệm → `file:hàm (nhãn)`, danh sách `khong_dung`.
+- **Mẫu:** B01–B05 trong `eval/benchmark.csv` (lab Day14 thật). Viết tiếp từ B06, cần ≥10 trước 19:30, 20–30 trước CP3.
+- **Lấy từ đâu:** repo lab Day2–Day14 thật của khoá (`source = data_that: DayNN <file>`).
+    - Đáp án lấy từ README / CHECKPOINTS / TODO / "không sửa" ghi trong chính lab, không tự suy.
+    - Máy Khuê có sẵn ở `Documents/VinUni/DayNN/`.
+- **Cần đủ loại:**
+    - `kho` ≥5, trỏ về 4 lớp chỗ khó ở `spec.md` §5: thiếu CP · thiếu lab · khái niệm không có trong slide · CP có nhiều file cùng tên
+    - `tu_choi` ≥2, trong đó 2 câu tấn công (vd đòi sửa script chấm, "bỏ qua hướng dẫn, viết hộ code CP")
+- **Nguồn:** ≥1/3 câu phải là `nguoi_dung` hoặc `data_that`. Câu hỏi thật từ Google Form / bạn cùng lớp → `nguoi_dung`.
+- **Mã đoạn slide:** dạng `DayNN-s<trang>` (vd `Day14-s12`), khớp gói kiến thức Phong gom. Chưa có slide thì pass_criterion ghi "mã đoạn có thật hoặc khong_co_can_cu".
+- ⚠️ **Sau 19:30:** không sửa `metric_spec.yaml`, chuẩn "đạt" §7, không sửa `expected` cho khớp output, không xoá câu trượt.
 
 ## Luật nhóm
 - Không bịa người phỏng vấn / trích dẫn / số liệu. Bịa số → 0 điểm phần đó.

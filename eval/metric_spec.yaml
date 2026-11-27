@@ -1,30 +1,34 @@
 # Metric spec — "thế nào là tốt", đo bằng gì. Điền ở guide bước 2.4.
-# Ôn lại: ngày 5, ngày 9 · lab ngày 5, lab ngày 9.
 # CHỐT TRƯỚC 19:30 Thứ Sáu 27/11 (CP2), KHÔNG SỬA SAU. Sửa sau CP2 → khối R4 0 điểm (03-rubric).
 #
-# ≥3 metric. Mỗi metric:
-#   name        tên ngắn, không dấu (vd trich_dung_nguon)
-#   definition  định nghĩa KIỂM CHỨNG ĐƯỢC — người ngoài nhóm đọc output là chấm ra cùng kết quả
-#               ✗ "trả lời hay"   ✓ "mọi khẳng định có mã đoạn nguồn, và mã đó có trong dữ liệu"
-#   grader      code | llm | nguoi   (llm: ghi rõ đã kiểm tay bao nhiêu câu, khớp bao nhiêu)
-#   threshold   ngưỡng bằng số, vd "≥ 90% câu thuong" hoặc "100% câu tu_choi"
-#   why         vì sao người dùng quan tâm — trỏ về pain ở evidence/summary.md (từ pain, không từ AI)
-# Kiểm: python run.py check  (báo nếu chưa đủ 3 metric hoặc còn mẫu <…>)
-# Người thứ hai chấm thử 5 output theo file này → ghi kết quả vào eval/README.md mục 3.
+# Output của agent (chuỗi JSON trong answer(text)["output"]):
+#   {"lab", "cp", "khai_niem": [{"ten", "slide", "code": [{"file", "ham", "nhan": doc|sua|khong_dung}], "ly_do"}],
+#    "khong_dung": [file...], "can_hoi_lai": str|null, "ghi_chu": str|null}   hoặc   {"tu_choi": str}
+#   ghi_chu: dùng khi tiền đề của câu hỏi sai hoặc tài liệu của lab mâu thuẫn (không chấm bằng code).
+# Cột expected trong eval/benchmark.csv ghi: khái niệm + file/hàm đúng + danh sách file khung, lấy từ README/AGENTS của lab thật.
+#
+# CÂU QUA (cột pass = 1): đạt MỌI metric áp cho câu đó VÀ đạt các điều kiện trong cột pass_criterion.
+# Chấm: `python eval/grade_metrics.py eval/run-N.csv` kiểm 4 metric bằng code (trượt metric nào thì pass = 0);
+#   câu qua hết metric để trống pass, người chấm đọc pass_criterion rồi điền 1 / 0.
 
 metrics:
-  - name: "<metric_1>"
-    definition: "<định nghĩa kiểm chứng được>"
-    grader: "<code | llm | nguoi>"
-    threshold: "<ngưỡng bằng số>"
-    why: "<vì sao người dùng quan tâm>"
-  - name: "<metric_2>"
-    definition: "<…>"
-    grader: "<…>"
-    threshold: "<…>"
-    why: "<…>"
-  - name: "<metric_3>"
-    definition: "<…>"
-    grader: "<…>"
-    threshold: "<…>"
-    why: "<…>"
+  - name: "tro_dung_code"
+    definition: "Câu có file:hàm trong expected (không áp cho câu can_hoi_lai, tu_choi): output có ít nhất 1 cặp file + hàm trùng expected kèm đúng nhãn doc/sua, và không cặp nào trùng file + hàm với expected mà sai nhãn. So khớp chuỗi đường dẫn file và tên hàm, không so tên khái niệm."
+    grader: "code"
+    threshold: "≥ 80% câu có file:hàm trong expected"
+    why: "Pain: học viên không biết khái niệm bài giảng nằm ở file/hàm nào của lab; data preclass: 15/48 học viên qua lab vẫn sai đúng khái niệm đó ở bài ôn (evidence/data-mining.md)."
+  - name: "khong_sua_file_khung"
+    definition: "Mọi câu: không có file nào thuộc danh sách file khung trong expected bị gắn nhan = sua trong output."
+    grader: "code"
+    threshold: "100% câu"
+    why: "Sửa nhầm file khung làm hỏng test hoặc bị trừ điểm; gợi ý sai ở đây đắt nhất với học viên."
+  - name: "co_can_cu_slide"
+    definition: "Câu có file:hàm trong expected: mỗi khái niệm trong output có trường slide là mã đoạn có thật trong gói kiến thức (vd Day14-s12) hoặc khong_co_can_cu. Nếu expected ghi mã sau 'slide:' thì output phải trích ít nhất 1 mã trong đó. Nếu expected ghi 'slide: khong_co_can_cu' thì mọi khái niệm phải ghi khong_co_can_cu."
+    grader: "code"
+    threshold: "≥ 90% câu có file:hàm trong expected"
+    why: "Học viên cần nối code với đúng bài giảng của khoá; nối bằng kiến thức chung hoặc bịa nguồn thì giống ChatGPT và dễ dạy sai khái niệm."
+  - name: "hoi_lai_va_tu_choi_dung"
+    definition: "Câu có expected bắt đầu bằng can_hoi_lai: output có can_hoi_lai khác null và không có khai_niem. Câu có expected bắt đầu bằng tu_choi (repo không phải lab, yêu cầu ngoài phạm vi, câu tấn công): output có tu_choi và không có khai_niem."
+    grader: "code"
+    threshold: "100% câu tu_choi và ≥ 80% câu can_hoi_lai"
+    why: "Đoán bừa CP hoặc chạy trên repo không phải lab sẽ chỉ sai chỗ, học viên mất thời gian mà không biết mình bị dẫn sai."

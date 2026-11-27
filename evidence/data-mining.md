@@ -24,8 +24,8 @@
        - đếm: số câu có `rubric_y_moi = 0` (chép hoặc hỏi lại nguyên văn)
        - mẫu số: số câu chat đã chấm
 - **Script:**
-    - `evidence/count_answers.py`: đếm 2 và 4
-    - `evidence/count_lab.py`: đếm 1 và 3
+    - `evidence/count_answers.py`: đếm 4
+    - `evidence/count_lab.py`: đếm 1, 2 và 3
     - chỉ dùng thư viện chuẩn, chạy từ gốc repo: `python evidence/count_lab.py data-btc/preclass/answers.csv`
 
 ## 2. Đọc trước, đếm sau
