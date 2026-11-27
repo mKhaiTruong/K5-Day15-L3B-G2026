@@ -123,8 +123,9 @@ def doc_cau_truc_lab(repo: str) -> dict:
 def doc_cp(repo: str, cp: str) -> dict:
     """Đọc mô tả một CP và các file / hàm Python thuộc phần việc của CP đó.
 
-    Input: repo, mã CP ("CP5"; rỗng = lab không chia CP). Output: {"mo_ta": str, "ham": [{"file", "ham"}]};
-    mo_ta rỗng nếu không có CP đó.
+    Input: repo, mã CP ("CP5"; rỗng = lab không chia CP).
+    Output: {"mo_ta": str, "ham": [{"file", "ham", "dong"}], "todo": [{"file", "dong", "text"}]};
+    mo_ta rỗng nếu không có CP đó. todo = dòng TODO của CP này trong các file đó (để biết hàm nào học viên phải viết).
     Hàm lấy từ file .py được nhắc trong đoạn CP, hoặc nằm trong thư mục được nhắc. Với thư mục, nếu README
     của thư mục ghi "TODO" cạnh tên file thì chỉ lấy các file đó (bỏ app phụ trùng tên ở thư mục con khác).
     Lab không chia CP: mô tả = README, hàm = mọi file .py của repo.
@@ -132,7 +133,8 @@ def doc_cp(repo: str, cp: str) -> dict:
     """
     if not cp:
         files = [f for f in _walk_files(repo, 3) if f.endswith(".py")]
-        return {"mo_ta": _read(os.path.join(repo, "README.md"))[:3000], "ham": _list_functions(repo, files)}
+        return {"mo_ta": _read(os.path.join(repo, "README.md"))[:3000], "ham": _list_functions(repo, files),
+                "todo": _todo_lines(repo, files, "")}
     text = _read(os.path.join(repo, "CHECKPOINTS.md")) or _read(os.path.join(repo, "README.md"))
     num = re.sub(r"\D", "", cp)
     m = re.search(rf"^#+[^\n]*\bCP\s?{num}\b.*?(?=^#+[^\n]*\bCP\s?\d+\b|\Z)", text, re.MULTILINE | re.DOTALL)
@@ -151,7 +153,7 @@ def doc_cp(repo: str, cp: str) -> dict:
             py_files += _files_in_scope(repo, ref)
         elif ref.endswith(".py") and os.path.isfile(path):
             py_files.append(ref)
-    return {"mo_ta": mo_ta[:3000], "ham": _list_functions(repo, py_files)}
+    return {"mo_ta": mo_ta[:3000], "ham": _list_functions(repo, py_files), "todo": _todo_lines(repo, py_files, cp)}
 
 
 def _files_in_scope(repo: str, folder: str) -> list:
@@ -178,8 +180,27 @@ def _list_functions(repo: str, py_files: list) -> list:
             continue
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_"):
-                ham.append({"file": rel, "ham": node.name})
+                ham.append({"file": rel, "ham": node.name, "dong": node.lineno})
     return ham[:200]
+
+
+def _todo_lines(repo: str, py_files: list, cp: str) -> list:
+    """Lấy các dòng TODO của CP trong file .py (vd "# TODO CP1: viết ba hàm dưới đây").
+
+    Lấy dòng ghi đúng CP đó, hoặc TODO không ghi CP nào. cp rỗng = lấy mọi TODO.
+    """
+    num = re.sub(r"\D", "", cp)
+    other_cp = re.compile(r"\bCP\s?\d+", re.IGNORECASE)
+    this_cp = re.compile(rf"\bCP\s?{num}(?!\d)", re.IGNORECASE) if num else None
+    out = []
+    for rel in sorted(set(py_files)):
+        for i, line in enumerate(_read(os.path.join(repo, rel)).splitlines(), 1):
+            if "TODO" not in line:
+                continue
+            if this_cp and other_cp.search(line) and not this_cp.search(line):
+                continue
+            out.append({"file": rel, "dong": i, "text": line.strip()[:200]})
+    return out[:40]
 
 
 @tool

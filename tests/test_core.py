@@ -166,3 +166,28 @@ def test_heatmap_mac_dinh_khong_ghi(labs):
     tracing.begin("test")
     assert tools.ghi_cau_hoi_an_danh("Day99", "CP1", ["rate limit"]) == "bo_qua"
     tracing.end()
+
+
+def test_doc_cp_lay_todo_dung_cp_va_so_dong(labs):
+    """doc_cp trả dòng TODO của đúng CP (bỏ TODO của CP khác) và số dòng của từng hàm."""
+    _write(labs / "app" / "rate_limiter.py",
+           "# TODO CP1: viết hàm dưới đây\ndef check_rate_limit(key):\n    pass\n\n"
+           "# TODO CP2: chưa tới\ndef other():\n    pass\n")
+    info = tools.doc_cp(str(labs), "CP1")
+    assert [t["dong"] for t in info["todo"]] == [1]
+    assert {"file": "app/rate_limiter.py", "ham": "check_rate_limit", "dong": 2} in info["ham"]
+
+
+def test_prompt_co_todo_va_so_dong(labs, monkeypatch):
+    """Bước 5 đưa model dòng TODO + số dòng hàm, để model biết hàm nào học viên phải viết (nhãn sua)."""
+    _write(labs / "app" / "rate_limiter.py", "# TODO CP1: viết hàm dưới đây\ndef check_rate_limit(key):\n    pass\n")
+    seen = {}
+
+    def fake_call(system, user):
+        seen["user"] = user
+        return {"text": "{}", "model": "fake", "tokens_in": 0, "tokens_out": 0}
+
+    monkeypatch.setattr(agent, "call_model", fake_call)
+    ask("Lab Day99 CP1 rate limit nằm ở đâu?")
+    assert "app/rate_limiter.py:check_rate_limit (dòng 2)" in seen["user"]
+    assert "app/rate_limiter.py:1: # TODO CP1: viết hàm dưới đây" in seen["user"]
