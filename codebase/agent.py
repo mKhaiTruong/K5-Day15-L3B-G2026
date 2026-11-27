@@ -31,7 +31,10 @@ Chỉ dùng các hàm trong danh sách "Hàm của CP" và các đoạn trong "S
 Trả về DUY NHẤT một JSON:
 {"khai_niem": [{"ten": str, "slide": "<mã đoạn slide đã cho, hoặc khong_co_can_cu>",
   "code": [{"file": str, "ham": str, "nhan": "doc|sua|khong_dung"}], "ly_do": str}]}
-- Mỗi khái niệm trỏ tới hàm có trong danh sách; nhãn "sua" nếu CP yêu cầu học viên viết / sửa hàm đó, "doc" nếu chỉ cần đọc.
+- Mỗi khái niệm trỏ tới hàm có trong danh sách.
+- Nhãn "sua" nếu Mô tả CP hoặc "TODO trong code" yêu cầu học viên viết / điền / sửa hàm đó.
+  Dòng TODO đứng ngay trên các hàm (vd "TODO CP1: viết ba hàm dưới đây") áp cho các hàm ngay sau nó, đếm theo số dòng.
+- Nhãn "doc" nếu học viên chỉ cần đọc hoặc gọi lại hàm có sẵn.
 - Không bao giờ gắn nhãn "sua" cho file trong "File khung".
 - Khái niệm không có trong slide đã cho thì ghi slide = "khong_co_can_cu"."""
 
@@ -152,9 +155,12 @@ def answer(text: str) -> dict:
     slides = tim_slide(p["lab"], text)
 
     # Bước 5: model ghép khái niệm ↔ code
-    user = "Câu của học viên:\n{}\n\nMô tả CP:\n{}\n\nHàm của CP:\n{}\n\nFile khung:\n{}\n\nSlide:\n{}".format(
+    user = ("Câu của học viên:\n{}\n\nMô tả CP:\n{}\n\nHàm của CP:\n{}\n\nTODO trong code:\n{}\n\n"
+            "File khung:\n{}\n\nSlide:\n{}").format(
         text, cp_info["mo_ta"][:1500],
-        "\n".join("{}:{}".format(h["file"], h["ham"]) for h in ham) or "(không có)",
+        "\n".join("{}:{} (dòng {})".format(h["file"], h["ham"], h["dong"]) for h in ham) or "(không có)",
+        "\n".join("{}:{}: {}".format(t["file"], t["dong"], t["text"]) for t in cp_info.get("todo", []))
+        or "(không có)",
         "\n".join(khung) or "(không có)",
         "\n".join("[{}] {}".format(s["ma"], s["text"]) for s in slides) or "(chưa có slide)")
     reply = call_model(SYSTEM, user)
