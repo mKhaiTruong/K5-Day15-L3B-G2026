@@ -7,11 +7,16 @@ bằng ast (không chạy code lab).
     lo_trinh(output)            → ≤5 bước đọc file
     do_thi_import(repo, files)  → mũi tên "file A import file B" giữa các file đó
     ve_mermaid(lt, canh)        → sơ đồ Mermaid (text)
+    ve_html(lab, muc)           → trang HTML kiểu wiki: sidebar CP + sơ đồ + lộ trình (theme gatsby, material wax)
 """
 import ast
+import html
 import os
+import urllib.parse
 
 MAX_BUOC = 5
+ISSUE_URL = "https://github.com/mKhaiTruong/K5-Day15-L3B-G2026/issues/new"
+MERMAID_CDN = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"
 
 
 def lo_trinh(output: dict) -> dict:
@@ -177,9 +182,9 @@ def ve_mermaid(lt: dict, canh: list) -> str:
         ds = "<br/>".join(_esc(f) for f in lt["khong_dung"][:6])
         more = f"<br/>… +{len(lt['khong_dung']) - 6}" if len(lt["khong_dung"]) > 6 else ""
         lines.append(f'    K["⛔ Đừng đụng<br/>{ds}{more}"]:::khung')
-    lines += ["    classDef doc fill:#e8f1fb,stroke:#6a9fd4,color:#1f3b57",
-              "    classDef sua fill:#e7f5ea,stroke:#5fae6e,color:#1e4227",
-              "    classDef khung fill:#fbeaea,stroke:#d98c8c,color:#5a2323"]
+    lines += ["    classDef doc fill:#D1DFE4,stroke:#28303D,stroke-width:2px,color:#28303D",   # gatsby: xanh lạnh
+              "    classDef sua fill:#EEEADD,stroke:#28303D,stroke-width:3px,color:#28303D",   # gatsby: kem ấm
+              "    classDef khung fill:#E4D1D1,stroke:#A0474A,stroke-width:2px,color:#28303D"]  # gatsby: đỏ nhạt
     return "\n".join(lines)
 
 
@@ -187,3 +192,172 @@ def _esc(text: str) -> str:
     """Thoát ký tự làm vỡ nhãn Mermaid (ngoặc kép, <, >)."""
     return str(text).replace("&", "&amp;").replace('"', "#quot;").replace("<", "&lt;").replace(">", "&gt;")
 
+
+CSS = """
+:root {
+  --bg: #D1E4DD; --surface: #FFFFFF; --primary: #28303D; --text: #39414D; --muted: #4F5866;
+  --soft: #D1DFE4; --accent: #EEEADD; --khung: #E4D1D1; --error: #A0474A;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  --fs-body: 20px; --fs-sm: 18px; --fs-xs: 16px; --fs-h2: 36px; --fs-h3: 24px;
+  --space: 20px; --space-x: 25px; --space-y: 30px;
+}
+@media (min-width: 652px) { :root { --fs-h2: 48px; } }
+* { box-sizing: border-box; border-radius: 0; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 var(--fs-body)/1.7 var(--font); }
+h2 { font-size: var(--fs-h2); line-height: 1.3; font-weight: 400; color: var(--primary); margin: 0 0 var(--space); }
+h3 { font-size: var(--fs-h3); line-height: 1.3; font-weight: 400; color: var(--primary); margin: 0 0 10px; }
+p { margin: 0 0 var(--space); max-width: 610px; }
+a { color: var(--primary); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+code { font-family: ui-monospace, Consolas, monospace; font-size: var(--fs-sm); color: var(--primary); }
+.masthead { padding: var(--space-y) var(--space-x) var(--space); margin: 0 var(--space-x);
+  border-bottom: 3px solid var(--primary); box-shadow: 0 5px 0 -4px var(--primary); }
+.site { font-size: 24px; text-transform: uppercase; color: var(--primary); margin: 0; max-width: none; }
+.sub { font-size: var(--fs-sm); color: var(--muted); margin: 5px 0 0; }
+.layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: calc(var(--space) * 2);
+  max-width: 1240px; margin: 0 auto; padding: var(--space-y) var(--space-x) calc(var(--space-y) * 2); }
+nav { position: sticky; top: var(--space); align-self: start; }
+nav ol { list-style: none; margin: 0; padding: 0; border-top: 3px solid var(--primary); }
+nav li { border-bottom: 1px solid var(--primary); }
+nav a { display: block; padding: 13px 10px; text-decoration: none; font-size: var(--fs-sm); }
+nav a[aria-current="true"] { background: var(--surface); font-weight: 600; }
+nav .rong { color: var(--muted); font-size: var(--fs-xs); }
+.cp { margin-bottom: calc(var(--space-y) * 2); scroll-margin-top: var(--space); }
+.loi-nhan { background: var(--surface); border: 3px solid var(--primary); padding: var(--space); max-width: 610px; }
+.flow-wrap { position: relative; isolation: isolate; margin: var(--space-y) 16px var(--space-y) 0; }
+.flow-wrap::before { content: ""; position: absolute; inset: 16px -16px -16px 16px; z-index: -1;
+  border: 1px solid var(--primary);
+  background: repeating-linear-gradient(-45deg, var(--primary) 0 1px, var(--soft) 1px 7px); }
+.flow { background: var(--surface); border: 3px solid var(--primary); padding: var(--space); overflow-x: auto; margin: 0; }
+.flow-wrap .crop { position: absolute; width: 24px; height: 24px; pointer-events: none; }
+.crop.tl { top: -12px; left: -12px; border-top: 1px solid var(--primary); border-left: 1px solid var(--primary); }
+.crop.br { bottom: -12px; right: -12px; border-bottom: 1px solid var(--primary); border-right: 1px solid var(--primary); }
+pre.mermaid { font-size: var(--fs-xs); white-space: pre-wrap; margin: 0; }
+.chu-thich { font-size: var(--fs-xs); color: var(--muted); margin-top: 26px; }
+ol.steps { list-style: none; counter-reset: b; margin: 0; padding: 0; }
+ol.steps > li { counter-increment: b; display: grid; grid-template-columns: 56px minmax(0, 1fr);
+  gap: 0 var(--space); padding: var(--space) 0; border-top: 1px solid var(--primary); }
+ol.steps > li::before { content: counter(b); font-size: 32px; line-height: 1.1; color: var(--primary); }
+.nhan { display: inline-block; font-size: var(--fs-xs); font-weight: 500; padding: 2px 10px;
+  border: 2px solid var(--primary); margin-right: 10px; color: var(--primary); }
+.nhan.sua { background: var(--accent); } .nhan.doc { background: var(--soft); }
+.meta { font-size: var(--fs-sm); margin: 6px 0 0; max-width: none; }
+.slide { display: inline-block; font-size: var(--fs-xs); background: var(--surface); border: 1px solid var(--primary);
+  padding: 0 8px; margin: 4px 6px 0 0; }
+.bao-sai { font-size: var(--fs-xs); }
+.khung { background: var(--khung); border: 3px solid var(--error); padding: var(--space); margin-top: var(--space-y); }
+.khung ul { margin: 0; padding-left: 22px; font-size: var(--fs-sm); }
+.cho-trong { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space); margin-top: var(--space-y); }
+.cho-trong div { background: var(--accent); border: 1px dashed var(--primary); padding: 15px var(--space); font-size: var(--fs-sm); }
+@media (max-width: 821px) {
+  .layout { grid-template-columns: 1fr; }
+  nav { position: static; }
+  .cho-trong { grid-template-columns: 1fr; }
+  .flow-wrap::before { inset: 10px -10px -10px 10px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+"""
+
+
+def ve_html(lab: str, muc: list, issue_url: str = ISSUE_URL) -> str:
+    """Dựng trang HTML kiểu wiki cho 1 lab: sidebar các CP, mỗi CP có sơ đồ flow + lộ trình đánh số.
+
+    Theme gatsby (giấy bạc hà) + material wax (góc vuông, kẻ đôi, mảng lót lệch). Sơ đồ vẽ bằng
+    Mermaid tải từ CDN; mất mạng thì vẫn thấy sơ đồ dạng text. Chỗ cho F2 (heatmap) và F3 (Feynman)
+    hiện "chưa nối", không giả dữ liệu.
+
+    Args:
+        lab: Mã lab, vd "Day13".
+        muc: Mỗi CP một dict {"cp": "CP1", "lt": kết quả lo_trinh(), "mermaid": kết quả ve_mermaid()}.
+        issue_url: Link tạo issue GitHub cho nút "Báo chỗ sai".
+
+    Returns:
+        Chuỗi HTML hoàn chỉnh (1 file, CSS nhúng sẵn).
+    """
+    e = html.escape
+    nav, body = [], []
+    for i, m in enumerate(muc):
+        cp, lt = m["cp"], m["lt"]
+        sid = "cp-" + "".join(ch for ch in cp.lower() if ch.isalnum())
+        rong = "" if lt.get("buoc") else ' <span class="rong">(chưa có lộ trình)</span>'
+        cur = ' aria-current="true"' if i == 0 else ""
+        nav.append(f'<li><a href="#{sid}"{cur}>{e(cp)}{rong}</a></li>')
+        body.append(_ve_cp(lab, cp, sid, lt, m.get("mermaid", ""), issue_url))
+    return f"""<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{e(lab)} · bản đồ bài giảng ↔ code</title>
+<style>{CSS}</style>
+</head>
+<body>
+<header class="masthead">
+  <p class="site">{e(lab)} · bản đồ bài giảng ↔ code</p>
+  <p class="sub">Mỗi CP: khái niệm trong slide nằm ở file nào, đọc theo thứ tự nào, file nào không được đụng.</p>
+</header>
+<div class="layout">
+  <nav aria-label="Các checkpoint"><ol>{"".join(nav)}</ol></nav>
+  <main>{"".join(body)}</main>
+</div>
+<script type="module">
+  try {{
+    const {{ default: mermaid }} = await import("{MERMAID_CDN}");
+    mermaid.initialize({{ startOnLoad: false, theme: "base", securityLevel: "strict",
+      themeVariables: {{ fontFamily: "Segoe UI, Roboto, sans-serif", fontSize: "16px",
+        lineColor: "#28303D", primaryTextColor: "#28303D" }} }});
+    await mermaid.run({{ querySelector: "pre.mermaid" }});
+  }} catch (err) {{
+    document.querySelectorAll(".chu-thich").forEach(n => n.textContent = "Không tải được thư viện vẽ sơ đồ (cần mạng), đang hiện sơ đồ dạng chữ.");
+  }}
+  const links = document.querySelectorAll("nav a");
+  links.forEach(a => a.addEventListener("click", () => {{
+    links.forEach(x => x.removeAttribute("aria-current")); a.setAttribute("aria-current", "true");
+  }}));
+</script>
+</body>
+</html>
+"""
+
+
+def _ve_cp(lab: str, cp: str, sid: str, lt: dict, mermaid: str, issue_url: str) -> str:
+    """Một section CP: sơ đồ (điểm nhấn) → các bước đánh số → ô file khung → chỗ cho F2 / F3."""
+    e = html.escape
+    out = [f'<section class="cp" id="{sid}"><h2>{e(cp)}</h2>']
+    if not lt.get("buoc"):
+        out.append(f'<p class="loi-nhan">{e(lt.get("loi_nhan") or "Chưa có lộ trình cho CP này.")}</p>')
+    else:
+        out.append('<div class="flow-wrap"><span class="crop tl"></span><span class="crop br"></span>'
+                   f'<figure class="flow"><pre class="mermaid">{e(mermaid)}</pre></figure></div>'
+                   '<p class="chu-thich">Mũi tên đứt: thứ tự đọc. Mũi tên liền: file này import file kia.</p>')
+        out.append('<ol class="steps">')
+        for b in lt["buoc"]:
+            nhan = "✏️ Sửa" if b["nhan"] == "sua" else "📖 Đọc"
+            ham = ", ".join(e(h) for h in b["ham"])
+            slides = "".join(f'<span class="slide">{e(s)}</span>' for s in b["slide"]) or \
+                '<span class="slide">không có căn cứ slide</span>'
+            out.append(
+                f'<li><div><h3><span class="nhan {b["nhan"]}">{nhan}</span><code>{e(b["file"])}</code></h3>'
+                f'<p class="meta">Hàm: <code>{ham}</code></p>'
+                f'<p class="meta">Khái niệm: {e("; ".join(b["khai_niem"]))}</p>'
+                f'<p class="meta">{slides}</p>'
+                f'<p class="meta bao-sai"><a href="{e(_link_bao_sai(issue_url, lab, cp, b))}" target="_blank" '
+                f'rel="noopener">Báo chỗ sai</a> (mở issue công khai trên GitHub)</p></div></li>')
+        out.append("</ol>")
+        if lt.get("con_lai"):
+            out.append(f'<p class="meta">Còn {lt["con_lai"]} file nữa không hiện, để lộ trình gọn trong 5 bước.</p>')
+    if lt.get("khong_dung"):
+        ds = "".join(f"<li><code>{e(f)}</code></li>" for f in lt["khong_dung"])
+        out.append(f'<div class="khung"><h3>⛔ Đừng đụng</h3><p class="meta">File khung của đề, '
+                   f'sửa là hỏng test hoặc bị trừ điểm.</p><ul>{ds}</ul></div>')
+    out.append('<div class="cho-trong"><div>🔥 Bao nhiêu bạn kẹt ở CP này: chưa nối (feature 2)</div>'
+               '<div>💬 Giải thích lại cho mình nghe: chưa nối (feature 3)</div></div></section>')
+    return "".join(out)
+
+
+def _link_bao_sai(issue_url: str, lab: str, cp: str, b: dict) -> str:
+    """Link tạo issue GitHub điền sẵn lab, CP, file, hàm, mã slide của 1 bước."""
+    title = f"[F1 báo sai] {lab} {cp}: {b['file']}"
+    body = (f"Lab: {lab}\nCP: {cp}\nFile: {b['file']} ({b['nhan']})\nHàm: {', '.join(b['ham'])}\n"
+            f"Slide: {', '.join(b['slide']) or 'khong_co_can_cu'}\n\nSai ở đâu (nhãn / hàm / slide), đúng ra là gì:\n")
+    return issue_url + "?" + urllib.parse.urlencode({"title": title, "body": body})

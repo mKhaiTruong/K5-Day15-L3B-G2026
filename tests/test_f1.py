@@ -123,3 +123,42 @@ def test_mermaid_thoat_ngoac_kep_va_lo_trinh_rong():
     lt = f1.lo_trinh({"khai_niem": [_kn("k", "khong_co_can_cu", ('a"b.py', "h", "sua"))]})
     assert 'a#quot;b.py' in f1.ve_mermaid(lt, [])
     assert f1.ve_mermaid(f1.lo_trinh({"tu_choi": "x"}), []) == ""
+
+
+def _trang():
+    out = {"lab": "Day13", "cp": "CP1", "khong_dung": ["src/lab13_starter.py"], "khai_niem": [
+        _kn("Chi phí mỗi việc thành công", "Day13-s12", ("src/lab13.py", "mo_hinh", "sua"))]}
+    lt1 = f1.lo_trinh(out)
+    lt3 = f1.lo_trinh({"lab": "Day13", "cp": "CP3", "khai_niem": [], "can_hoi_lai": "Bạn hỏi cụ thể hơn?"})
+    return f1.ve_html("Day13", [{"cp": "CP1", "lt": lt1, "mermaid": f1.ve_mermaid(lt1, [])},
+                                {"cp": "CP3", "lt": lt3, "mermaid": ""}])
+
+
+def test_html_co_sidebar_cp_va_so_do():
+    """Sidebar có link tới từng CP (CP rỗng ghi chú 'chưa có lộ trình'); CP có bước thì có khối Mermaid."""
+    h = _trang()
+    assert '<a href="#cp-cp1" aria-current="true">CP1</a>' in h
+    assert 'href="#cp-cp3">CP3 <span class="rong">(chưa có lộ trình)</span>' in h
+    assert '<pre class="mermaid">flowchart LR' in h and f1.MERMAID_CDN in h
+
+
+def test_html_buoc_khung_va_cho_f2_f3():
+    """Mỗi bước có nhãn + file + mã slide; có ô ⛔ file khung; F2 / F3 ghi 'chưa nối', không giả dữ liệu."""
+    h = _trang()
+    assert '<span class="nhan sua">✏️ Sửa</span><code>src/lab13.py</code>' in h
+    assert '<span class="slide">Day13-s12</span>' in h
+    assert "⛔ Đừng đụng" in h and "<code>src/lab13_starter.py</code>" in h
+    assert "chưa nối (feature 2)" in h and "chưa nối (feature 3)" in h
+    assert '<p class="loi-nhan">Bạn hỏi cụ thể hơn?</p>' in h
+
+
+def test_html_thoat_ky_tu_va_link_bao_sai():
+    """Tên file chứa <script> bị thoát (không chèn được HTML); link báo sai điền sẵn lab / CP / file."""
+    lt = f1.lo_trinh({"khai_niem": [_kn("k", "khong_co_can_cu", ("<script>x</script>.py", "h", "sua"))]})
+    h = f1.ve_html("Day99", [{"cp": "CP1", "lt": lt, "mermaid": f1.ve_mermaid(lt, [])}])
+    assert "<script>x</script>" not in h and "&lt;script&gt;x&lt;/script&gt;.py" in h
+    assert "không có căn cứ slide" in h
+    link = f1._link_bao_sai(f1.ISSUE_URL, "Day13", "CP1", {"file": "src/lab13.py", "nhan": "sua",
+                                                           "ham": ["mo_hinh"], "slide": []})
+    assert link.startswith(f1.ISSUE_URL + "?title=")
+    assert "Day13" in link and "src%2Flab13.py" in link and "khong_co_can_cu" in link
