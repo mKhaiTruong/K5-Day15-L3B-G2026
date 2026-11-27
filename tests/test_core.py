@@ -139,6 +139,20 @@ def test_file_khung_chi_lay_trong_menh_de_khong_sua(tmp_path):
     assert khung == ["b.csv"]
 
 
+def test_file_khung_bo_qua_ghi_chu_trong_thu_muc_an(tmp_path):
+    """Repo học viên đã làm có ghi chú phân việc trong .study/ ("A KHÔNG sửa `src/lab13.py` ở CP1")
+    → không coi src/lab13.py là file khung; chỉ luật của đề (src/README.md) được tính."""
+    repo = tmp_path / "r"
+    _write(repo / "src" / "README.md", "- File học viên được sửa: `lab13.py`. Không sửa file `runs.csv`.\n")
+    _write(repo / "src" / "lab13.py", "def mo_hinh():\n    pass\n")
+    _write(repo / "src" / "runs.csv", "x\n")
+    _write(repo / ".study" / "plans" / "CP1.md", "Bạn A KHÔNG sửa `src/lab13.py` ở CP1 (bạn B sửa).\n")
+    tracing.begin("test")
+    khung = tools.tim_file_khung(str(repo))
+    tracing.end()
+    assert khung == ["src/runs.csv"]
+
+
 def test_lab_khong_chia_cp_thi_khong_hoi_cp(tmp_path, monkeypatch):
     """Lỗi 2: lab không có CP nào → không hỏi "CP nào?", đi tiếp và trỏ vào hàm trong repo."""
     lab = tmp_path / "Day98" / "K5-DAY98-NoCP"

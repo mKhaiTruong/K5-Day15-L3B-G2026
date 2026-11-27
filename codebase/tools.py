@@ -207,11 +207,15 @@ def _todo_lines(repo: str, py_files: list, cp: str) -> list:
 def tim_file_khung(repo: str) -> list:
     """Liệt kê file khung không được sửa, đọc từ các dòng ghi "không sửa" trong file .md của repo.
 
+    Bỏ qua file .md trong thư mục ẩn (.study/, .claude/, .github/…): đó là ghi chú của học viên / công cụ,
+    không phải luật của đề, mà repo học viên đã làm thường có (vd ".study/plans/...: không sửa file lab").
     Input: repo. Output: danh sách đường dẫn tương đối (dùng /). Không tác động ra ngoài.
     """
     out = set()
     for rel in _walk_files(repo):
         if not rel.lower().endswith(".md"):
+            continue
+        if any(part.startswith(".") for part in rel.split("/")[:-1]):
             continue
         folder = os.path.dirname(rel)
         for line in _read(os.path.join(repo, rel)).splitlines():
