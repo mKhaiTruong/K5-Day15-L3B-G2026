@@ -209,3 +209,62 @@ def test_buoc_kiem_tach_ma_slide_khi_model_chep_ca_doan(labs, tmp_path):
     out = agent._kiem(str(labs), "Day99", model_out, [])
     tracing.end()
     assert out[0]["slide"] == "Day99-s1"
+
+
+def _dem_goi_model(monkeypatch):
+    """Thay call_model bằng bản giả trả JSON hợp lệ, đếm số lần gọi."""
+    dem = {"n": 0}
+
+    def fake_call(system, user):
+        dem["n"] += 1
+        return {"text": '{"khai_niem": []}', "model": "fake", "tokens_in": 0, "tokens_out": 0}
+
+    monkeypatch.setattr(agent, "call_model", fake_call)
+    return dem
+
+
+def test_cache_mac_dinh_tat_luon_goi_model(labs, monkeypatch, tmp_path):
+    """Không bật CACHE → hỏi 2 lần gọi model 2 lần (eval / simulate đo chi phí thật)."""
+    monkeypatch.delenv("CACHE", raising=False)
+    monkeypatch.setenv("CACHE_DIR", str(tmp_path / "cache"))
+    dem = _dem_goi_model(monkeypatch)
+    ask("Lab Day99 CP1 rate limit nằm ở đâu?")
+    ask("Lab Day99 CP1 rate limit nằm ở đâu?")
+    assert dem["n"] == 2
+
+
+def test_cache_bat_cung_cau_khong_goi_lai(labs, monkeypatch, tmp_path):
+    """CACHE=1 + cùng câu, cùng repo → lần 2 dùng lại, không gọi model, output giống hệt."""
+    monkeypatch.setenv("CACHE", "1")
+    monkeypatch.setenv("CACHE_DIR", str(tmp_path / "cache"))
+    dem = _dem_goi_model(monkeypatch)
+    a = ask("Lab Day99 CP1 rate limit nằm ở đâu?")
+    b = ask("Lab Day99 CP1 rate limit nằm ở đâu?")
+    assert dem["n"] == 1 and a == b
+
+
+def test_cache_doi_repo_thi_goi_lai(labs, monkeypatch, tmp_path):
+    """CACHE=1 nhưng code lab đổi (thêm TODO) → prompt đổi → gọi lại model, không dùng bản cũ."""
+    monkeypatch.setenv("CACHE", "1")
+    monkeypatch.setenv("CACHE_DIR", str(tmp_path / "cache"))
+    dem = _dem_goi_model(monkeypatch)
+    ask("Lab Day99 CP1 rate limit nằm ở đâu?")
+    _write(labs / "app" / "rate_limiter.py", "# TODO CP1: viết hàm dưới đây\ndef check_rate_limit(key):\n    pass\n")
+    ask("Lab Day99 CP1 rate limit nằm ở đâu?")
+    assert dem["n"] == 2
+
+
+def test_cache_khong_luu_khi_model_tra_khong_phai_json(labs, monkeypatch, tmp_path):
+    """Model trả chữ thường (hỏng) → không lưu cache, lần sau vẫn gọi lại model."""
+    monkeypatch.setenv("CACHE", "1")
+    monkeypatch.setenv("CACHE_DIR", str(tmp_path / "cache"))
+    dem = {"n": 0}
+
+    def fake_call(system, user):
+        dem["n"] += 1
+        return {"text": "xin lỗi, mình không chắc", "model": "fake", "tokens_in": 0, "tokens_out": 0}
+
+    monkeypatch.setattr(agent, "call_model", fake_call)
+    ask("Lab Day99 CP1 rate limit nằm ở đâu?")
+    ask("Lab Day99 CP1 rate limit nằm ở đâu?")
+    assert dem["n"] == 2

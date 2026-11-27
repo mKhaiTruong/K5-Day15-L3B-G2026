@@ -10,10 +10,12 @@ Hình dạng: workflow cố định 6 bước, AI chỉ làm bước 5 (ghép kh
 
 Hợp đồng: answer(text) -> {"output": str}; output là chuỗi JSON theo format ở đầu eval/metric_spec.yaml.
 """
+import hashlib
 import json
+import os
 import re
 
-from ai import call_model
+from ai import MODEL_NAME, call_model
 from tools import (
     doc_cau_truc_lab,
     doc_cp,
@@ -92,6 +94,33 @@ def _parse_json(text: str):
     return data.get("khai_niem") if isinstance(data, dict) and isinstance(data.get("khai_niem"), list) else None
 
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _goi_model(system: str, user: str) -> str:
+    """Gọi model ở bước 5, dùng lại kết quả cũ khi bật CACHE=1 và prompt giống hệt.
+
+    Key = sha256(model + system + user): repo, CP, slide hay câu hỏi đổi thì prompt đổi, tự gọi lại model.
+    Chỉ lưu khi model trả JSON hợp lệ. Cache ghi file trong CACHE_DIR (mặc định data/cache, gitignored).
+
+    Returns:
+        Chữ model trả về (từ cache hoặc từ lần gọi mới).
+    """
+    on = os.environ.get("CACHE") == "1"
+    key = hashlib.sha256(f"{MODEL_NAME}\n{system}\n{user}".encode()).hexdigest()
+    path = os.path.join(os.environ.get("CACHE_DIR") or os.path.join(ROOT, "data", "cache"), key + ".json")
+    if on and os.path.exists(path):
+        note("cache: dùng lại kết quả bước 5, không gọi model")
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)["text"]
+    text = call_model(system, user)["text"]
+    if on and _parse_json(text) is not None:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"model": MODEL_NAME, "text": text}, f, ensure_ascii=False)
+    return text
+
+
 def _kiem(repo: str, lab: str, khai_niem: list, khung: list) -> list:
     """Bước 6: bỏ hàm không có thật, sửa mã slide bịa, ép nhãn khong_dung cho file khung."""
     out = []
@@ -168,8 +197,7 @@ def answer(text: str) -> dict:
         or "(không có)",
         "\n".join(khung) or "(không có)",
         "\n".join("[{}] {}".format(s["ma"], s["text"]) for s in slides) or "(chưa có slide)")
-    reply = call_model(SYSTEM, user)
-    khai_niem = _parse_json(reply["text"])
+    khai_niem = _parse_json(_goi_model(SYSTEM, user))
     if khai_niem is None:
         note("model không trả JSON — dùng ghép dự phòng")
         khai_niem = _ghep_du_phong(text, ham)
