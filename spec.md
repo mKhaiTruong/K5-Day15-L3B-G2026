@@ -42,28 +42,70 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): sẽ dùng
 - [sản phẩm / tính năng gần giống]: một điều đáng học · một điều đáng né · mình khác gì
 
 ## §4. Thiết kế *(guide 2.2, 3.2)*
-- **Lát cắt MỘT CÂU** (1 người dùng · 1 việc · 1 quyết định AI · 1 kết quả):
-- Không làm (≥3 điều):
-- **Sơ đồ** (ảnh / Mermaid / draw.io): [chèn ở đây]
-- **Hình dạng:** [ ] workflow cố định · [ ] một agent · [ ] nhiều agent — 2 dòng lý do, và vì sao **không** chọn hình dạng phức tạp hơn:
-- **AI dựa vào đâu** — mỗi công cụ (khớp `codebase/tools.py`):
+- **Lát cắt MỘT CÂU:** Học viên AI20K chọn lab và CP muốn hiểu, AI quyết định CP đó luyện khái niệm bài giảng nào và khái niệm nằm ở file / hàm nào (nhãn đọc / sửa / không đụng), học viên nhận bản đồ khái niệm → code có trích slide và code.
+- **Không làm:**
+    - không viết hay sửa code hộ học viên, không đụng vào repo
+    - không chấm điểm hay xếp hạng từng học viên; mentor chỉ thấy số gộp ẩn danh
+    - không hỗ trợ repo không phải lab
+    - không dùng kiến thức ngoài slide của khoá làm căn cứ
+    - không chạy code tuỳ ý của lab; phần "đoán khi đổi điều kiện" của Feynman chỉ dùng kịch bản đã chạy sẵn
+- **Sơ đồ:**
+
+```mermaid
+flowchart TD
+    U["Học viên: lab + CP + câu hỏi"] --> P["1. Đọc cấu trúc repo<br/>doc_cau_truc_lab"]
+    P -->|không có README CP / rubric| R["Từ chối: không phải lab"]
+    P --> C{"2. Đã rõ CP?"}
+    C -->|chưa| Q["Hỏi lại: bạn đang làm CP nào? (G10)"]
+    Q --> U
+    C -->|rõ| D["3. Đọc CP + file khung<br/>doc_cp · tim_file_khung"]
+    D --> S["4. Tìm đoạn slide<br/>tim_slide"]
+    S --> L["5. LLM ghép khái niệm ↔ file / hàm<br/>call_model"]
+    L --> V["6. Kiểm tra bằng code<br/>kiem_ham_ton_tai · ép nhãn khong_dung cho file khung<br/>mã slide không có thật → khong_co_can_cu"]
+    V --> O["Bản đồ khái niệm → code<br/>(JSON, trích slide + file:hàm)"]
+    O --> F1["Feature 1: lộ trình file + sơ đồ flow"]
+    O --> F2["Feature 2: heatmap<br/>ghi_cau_hoi_an_danh · ≥5 người mới hiện"]
+    O --> F3["Feature 3: phiên Feynman<br/>hỏi lại, chấm đối chiếu slide + code"]
+```
+
+- **Hình dạng:** [x] workflow cố định · [ ] một agent · [ ] nhiều agent
+    - Các bước luôn giống nhau: đọc repo → xác định CP → tìm slide → ghép → kiểm. AI chỉ làm bước 5. Rẻ hơn và dễ đo bằng benchmark hơn.
+    - Không chọn agent vì đường đi không đổi theo input. Để AI tự chọn tool thì dễ bỏ bước kiểm ở bước 6, mà bước 6 là chỗ chặn rủi ro chính.
+- **AI dựa vào đâu** (khớp `codebase/tools.py`):
 
   | Công cụ | Input | Output | Tác động ra ngoài? |
   |---|---|---|---|
-  |  |  |  |  |
+  | `doc_cau_truc_lab` | đường dẫn repo | cây file, nội dung README / CHECKPOINTS, `la_lab` (bool) | Không |
+  | `doc_cp` | repo, mã CP | đoạn mô tả CP + file có `TODO` của CP | Không |
+  | `tim_file_khung` | repo | danh sách file ghi "không sửa" trong README / AGENTS | Không |
+  | `tim_slide` | lab, khái niệm | đoạn slide + mã đoạn (`DayNN-s<trang>`) hoặc rỗng | Không |
+  | `kiem_ham_ton_tai` | repo, file, hàm | có / không | Không |
+  | `ghi_cau_hoi_an_danh` | lab, CP, khái niệm | đã ghi (không lưu mã học viên) | Có: ghi dữ liệu thống kê |
 
-- **Mức tự động:** [ ] AI gợi ý, người quyết · [ ] AI tự làm khi chắc, chuyển người khi không · [ ] AI tự làm — lý do (sai thì ai chịu gì, sửa đắt hay rẻ):
-- **Chỗ chặn rủi ro** (rủi ro lớn nhất của lát cắt bị chặn ở đâu, bằng gì):
-- **Chỗ người duyệt** (việc AI không được tự làm):
-- **Nguyên tắc thiết kế** (≥3, bắt buộc G10):
+- **Mức tự động:** [x] AI gợi ý, người quyết
+    - AI chỉ chỉ đường và giải thích; học viên tự đọc, tự sửa code.
+    - Nối sai khái niệm ↔ code thì học viên hiểu sai, khó tự phát hiện. Vì vậy mỗi liên kết phải kèm căn cứ (file:hàm + mã slide) để học viên tự kiểm.
+- **Chỗ chặn rủi ro:** rủi ro lớn nhất là bịa hàm hoặc bịa nguồn, và bảo học viên sửa file khung. Bước 6 chặn bằng code, không dựa vào LLM:
+    - hàm không tồn tại thì bị bỏ
+    - mã slide không có thật thì đổi thành `khong_co_can_cu`
+    - file trong `tim_file_khung` luôn bị ép nhãn `khong_dung`
+- **Chỗ người duyệt:**
+    - AI không ghi gì vào repo của học viên
+    - heatmap chỉ hiện số gộp khi ≥5 người; mentor không xem được câu hỏi của từng người
+    - kết quả phiên Feynman chỉ học viên thấy
+- **Nguyên tắc thiết kế:**
 
   | Nguyên tắc | Chỗ cụ thể trên sơ đồ / trong bản chạy thử |
   |---|---|
-  | G10 — thu hẹp phạm vi khi không chắc |  |
-  |  |  |
-  |  |  |
+  | G10 — thu hẹp phạm vi khi không chắc | Bước 2: chưa rõ CP thì hỏi lại một câu; bước 1: không phải lab thì từ chối |
+  | G11 — giải thích vì sao | Output: mỗi khái niệm kèm đoạn slide + `file:hàm` + 1 câu lý do |
+  | G1 / G2 — nói rõ làm được gì, tốt đến đâu | Bước 6: không có căn cứ thì ghi `khong_co_can_cu`; giao diện ghi rõ chỉ hỗ trợ lab có gói kiến thức (demo: Day14) |
+  | G8 / G9 — dễ bỏ qua, dễ sửa | Feature 1: học viên bấm "chỗ này sai" trên từng liên kết, ghi lại để sửa gói kiến thức |
 
-- Phần nào còn giả (công cụ trả dữ liệu giả, model chế độ giả…) — ghi rõ, không giả làm thật:
+- **Phần còn giả:**
+    - CP2: `python run.py` chạy với AI giả (chế độ giả của khung), chưa gọi model thật
+    - gói kiến thức Day14 (slide) đang gom
+    - heatmap lúc demo dùng câu hỏi thật của bạn cùng lớp; dưới 5 người thì hiện "chưa đủ dữ liệu"
 
 ## §5. Chỗ khó — 4 lớp + ≥6 kịch bản + 2 tấn công *(guide 2.3)*
 
