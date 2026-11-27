@@ -69,3 +69,57 @@ def test_hoi_lai_thi_lo_trinh_rong_kem_cau_hoi():
     lt = f1.lo_trinh(out)
     assert lt["buoc"] == [] and lt["loi_nhan"] == "Bạn hỏi cụ thể hơn được không?"
     assert lt["khong_dung"] == ["a.csv"]
+
+
+def _w(root, rel, text):
+    p = root / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text, encoding="utf-8")
+
+
+def test_import_tuyet_doi_khop_theo_duoi_duong_dan(tmp_path):
+    """`from app.auth import x` trong 06-lab/app/main.py → khớp 06-lab/app/auth.py (app là gói con)."""
+    _w(tmp_path, "06-lab/app/main.py", "from app.auth import verify\nimport os\n")
+    _w(tmp_path, "06-lab/app/auth.py", "def verify():\n    pass\n")
+    canh = f1.do_thi_import(str(tmp_path), ["06-lab/app/main.py", "06-lab/app/auth.py"])
+    assert canh == [("06-lab/app/main.py", "06-lab/app/auth.py")]
+
+
+def test_import_tuong_doi_va_from_goi_import_module(tmp_path):
+    """`from .cost_guard import x` và `from app import auth` (auth là module con) đều thành cạnh."""
+    _w(tmp_path, "app/main.py", "from .cost_guard import check\nfrom app import auth\n")
+    _w(tmp_path, "app/cost_guard.py", "")
+    _w(tmp_path, "app/auth.py", "")
+    canh = f1.do_thi_import(str(tmp_path), ["app/main.py", "app/cost_guard.py", "app/auth.py"])
+    assert set(canh) == {("app/main.py", "app/cost_guard.py"), ("app/main.py", "app/auth.py")}
+
+
+def test_import_ngoai_lo_trinh_file_loi_va_tu_tro_bi_bo(tmp_path):
+    """Thư viện ngoài, file không nằm trong lộ trình, file lỗi cú pháp, file không phải .py → không có cạnh."""
+    _w(tmp_path, "src/lab13.py", "import pandas\nfrom src import lab13\nfrom src.helper import x\n")
+    _w(tmp_path, "src/helper.py", "")
+    _w(tmp_path, "src/broken.py", "def (:\n")
+    canh = f1.do_thi_import(str(tmp_path), ["src/lab13.py", "src/broken.py", "README.md", "khong_co.py"])
+    assert canh == []
+
+
+def test_mermaid_co_o_buoc_mui_ten_va_o_khung():
+    """Sơ đồ có 1 ô / bước tô màu theo nhãn, mũi tên đứt nối thứ tự đọc, mũi tên import, ô ⛔ file khung."""
+    out = {"khong_dung": ["grader.py"], "khai_niem": [
+        _kn("Xác thực", "Day14-s3", ("app/main.py", "ask", "doc")),
+        _kn("API key", "khong_co_can_cu", ("app/auth.py", "verify_api_key", "sua"))]}
+    lt = f1.lo_trinh(out)
+    m = f1.ve_mermaid(lt, [("app/main.py", "app/auth.py")])
+    assert m.startswith("flowchart LR")
+    assert 'B1["1 · 📖 đọc<br/>app/main.py' in m and ":::doc" in m
+    assert 'B2["2 · ✏️ sửa<br/>app/auth.py' in m and ":::sua" in m
+    assert "B1 -.-> B2" in m and "B1 -->|import| B2" in m
+    assert "⛔ Đừng đụng<br/>grader.py" in m and ":::khung" in m
+    assert "Day14-s3" in m
+
+
+def test_mermaid_thoat_ngoac_kep_va_lo_trinh_rong():
+    """Tên có dấu ngoặc kép không làm vỡ nhãn; lộ trình rỗng → chuỗi rỗng."""
+    lt = f1.lo_trinh({"khai_niem": [_kn("k", "khong_co_can_cu", ('a"b.py', "h", "sua"))]})
+    assert 'a#quot;b.py' in f1.ve_mermaid(lt, [])
+    assert f1.ve_mermaid(f1.lo_trinh({"tu_choi": "x"}), []) == ""
