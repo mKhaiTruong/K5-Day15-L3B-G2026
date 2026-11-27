@@ -37,6 +37,5 @@ data-btc
 data-btc/
 # Lõi: repo lab, slide khoá (không commit nguyên tài liệu khoá), log heatmap
 data/labs/
-data/knowledge/
 data/heatmap/
 .pytest_cache/
