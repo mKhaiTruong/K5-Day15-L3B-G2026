@@ -9,30 +9,33 @@
 - Python: dùng `.venv/Scripts/python.exe` (Windows). LLM mặc định: OpenAI, key trong `.env`.
 
 ## Hướng đang theo (tạm chốt 27/11, chưa có bằng chứng)
-- **Track A.** Tên tạm: agent chỉ đường repo lab.
-- **Người đau:** sinh viên vừa nhận repo lab, muốn làm đúng nhưng không biết bắt đầu từ đâu, file nào sửa, file nào cấm đụng.
+- **Track A.** Tên tạm: bản đồ bài giảng ↔ code lab theo CP.
+- **Mục tiêu cuối:** học viên **hiểu bài lab và nối được với bài giảng**, không chỉ làm nhanh. Tìm file là phương tiện.
+- **Người đau:** học viên AI20K đang làm hoặc vừa nộp lab, muốn hiểu bài; không biết khái niệm trong slide nằm ở file / hàm nào của lab, nên test xanh mà không giải thích được code.
 - **Không phục vụ:** người kệ đời chỉ vibe code cho qua.
-- **Lát cắt:** sinh viên đưa repo lab + chọn CP (và mục tiêu: làm bài / hiểu lại / tìm lỗi) → agent trả lộ trình ~5 file theo thứ tự, mỗi file gắn nhãn đọc / sửa / không đụng + 1 câu lý do, kèm sơ đồ flow.
-- **Agent quyết định:** lộ trình theo CP; hỏi lại khi chưa rõ CP/mục tiêu; từ chối khi repo không phải lab (dùng cho test `tu_choi`).
-- **Khác DeepWiki/ChatGPT:** họ giải thích mọi file như nhau. Agent này biết cấu trúc đề lab (checkpoint, rubric, file cấm sửa) và chỉ đường theo nhiệm vụ.
-- **Cấu trúc:** lõi (phân tích repo lab + CP, tìm file / folder / khái niệm quan trọng) + 3 feature dùng chung lõi. Nhóm tự chia thời gian, không ưu tiên feature nào trong tài liệu nộp.
-    1. lộ trình file theo CP (mô tả ở trên)
-    2. heatmap: câu hỏi gộp ẩn danh → badge "🔥 x/N bạn hỏi ở đây" trên cây file + trang "CP nào lớp kẹt nhất" cho người ra đề; < ~5 người thì ghi "chưa đủ dữ liệu"
-    3. Feynman: sau khi làm, agent đóng vai người mới hỏi, học viên giải thích lại; chấm đối chiếu slide + code; hổng thì trỏ lại đoạn slide / code. Tự nguyện, không ai xem kết quả riêng
-- **Số muốn đo:** thời gian tới lần mở đúng file cần sửa, có agent so với không có (5 bạn cùng lớp, 1 lab lạ).
-- **Benchmark:** lấy từ lab Day1–15 thật của khóa (`data_that`) + repo không phải lab (`tu_choi`).
+- **Nguồn kiến thức:** repo lab (README, CP, rubric, code) + slide bài giảng của buổi đó. ⚠️ Cần xác nhận team có slide.
+- **Lõi (agent quyết định):** CP này luyện khái niệm nào → khái niệm nằm ở file / hàm nào (nhãn đọc / sửa / không đụng). Mỗi liên kết phải trích slide + code; không có căn cứ thì nói không có. Hỏi lại khi chưa rõ CP; từ chối khi repo không phải lab (test `tu_choi`).
+- **Khác DeepWiki / ChatGPT / NotebookLM:** họ không có slide của khoá, hoặc không biết cấu trúc đề lab. Mình nối "khái niệm trong slide = hàm này trong lab" theo từng CP.
+- **3 feature dùng chung lõi.** Nhóm tự chia thời gian, không ưu tiên feature nào trong tài liệu nộp.
+    1. lộ trình file theo CP: ~5 file theo thứ tự + sơ đồ flow (skill `lab-cp-html` của 1 thành viên)
+    2. heatmap: câu hỏi gộp ẩn danh → badge "🔥 x/N bạn hỏi ở đây" + trang "khái niệm / CP nào lớp kẹt nhất" cho người ra đề; < ~5 người thì ghi "chưa đủ dữ liệu"
+    3. Feynman: agent đóng vai người mới hỏi, học viên giải thích lại; chấm đối chiếu slide + code; hổng thì trỏ lại đúng đoạn. Tự nguyện, không ai xem kết quả riêng
+- **Learning metric (Track A bắt buộc):** quiz khái niệm của 1 lab trước / sau khi dùng app (~5 bạn cùng lớp).
+- **Benchmark:** lab Day1–15 thật của khoá (`data_that`): input = lab + CP, expected = khái niệm + file / hàm; thêm repo không phải lab (`tu_choi`).
 
 ## Đã loại (đừng đề xuất lại)
 - **Track B (B1/B2/B3):** 2 thành viên không muốn làm y tế. B2 rủi ro cao.
+- **Chỉ tìm file cần sửa (bản đầu):** giúp làm nhanh, không chắc giúp hiểu. Giữ làm feature 1.
 - **Feynman tutor đứng riêng:** không ai tự mở app để bị kiểm tra. Đã gộp thành feature 3.
 - **Mentor dùng app để kiểm tra từng người:** thành công cụ giám sát, vi phạm luật Track A.
-- **Gallery format tóm tắt repo:** trùng DeepWiki/GitDiagram; phần AI mờ. Chỉ giữ ý sơ đồ flow (skill `lab-cp-html` của 1 thành viên).
+- **Gallery format tóm tắt repo:** trùng DeepWiki/GitDiagram; phần AI mờ.
 
 ## Việc tiếp theo
-- **CP1:** đã viết nháp `TEAMS.md` (Track A), `canvas.md`, `evidence/hypothesis.md`, `spec.md` §0–§2. Còn thiếu: phân công trong canvas dòng 7 + cột "Phần việc chính" của `TEAMS.md`.
+- **CP1:** đã viết `TEAMS.md` (Track A), `canvas.md`, `evidence/hypothesis.md`, `spec.md` §0–§2 (PR #2, issue #1). Còn thiếu: phân công trong canvas dòng 7 + cột "Phần việc chính" của `TEAMS.md`. Khuê làm lõi.
 - **Trước CP2:**
-    - phỏng vấn ≥3 sinh viên ngoài team, hỏi kiểu Mom Test: "lần gần nhất nhận repo lab mở file nào đầu tiên, mất bao lâu tìm ra file cần sửa, từng sửa nhầm file cấm chưa?"
-    - hỏi 1–2 mentor xem họ có biết lớp kẹt ở đâu không
+    - phỏng vấn ≥3 học viên ngoài team (Mom Test): "lab nào bạn nộp trong 2 tuần qua? khái niệm chính của CP đó nằm ở hàm nào, sao code làm vậy? lần gần nhất bị hỏi về code mình nộp mà không trả lời được là khi nào?"
+    - đào data preclass: tỷ lệ học viên tự giải thích lại → `evidence/data-mining.md`
+    - hỏi 1–2 mentor xem họ có biết lớp hổng khái niệm nào không
     - pain không thật → đổi hướng trước CP2
 
 ## Luật nhóm
