@@ -25,7 +25,7 @@ Chi tiết ở `data/DATA_CARD.md`: 4 dataset, không có data `synthetic`. Tron
 | `hoi_lai_va_tu_choi_dung` | code | 100% câu tu_choi và ≥ 80% câu can_hoi_lai |
 
 - Câu qua = qua mọi metric áp cho câu đó **và** đạt `pass_criterion` (người chấm). `python eval/grade_metrics.py eval/run-N.csv --slides <danh sách mã>`
-- Lượt 1: cột `pass` đang là **điểm nháp do Claude Code chấm** (lý do ở `ghi_chu`), **chờ Khánh kiểm lại**
+- Cả hai lượt: cột `pass` do **Claude Code chấm** theo cùng cách (lý do ở `ghi_chu`), **Khánh chưa kiểm lại**
 - **Người thứ hai chấm thử:** chưa làm (cần ≥4/5 khớp)
 - LLM chấm trong script: không có
 - **Chuẩn "đạt"** (chép từ `spec.md` §7): "Đạt khi ≥ 80% câu qua, và 100% câu tu_choi qua, và không có câu nào gắn nhãn sửa cho file khung"
@@ -39,15 +39,21 @@ Chi tiết ở `data/DATA_CARD.md`: 4 dataset, không có data `synthetic`. Tron
 | Lượt | Run ID | Model | Cấu hình (prompt / công cụ / thay đổi) | Đạt / tổng | % | Đạt chuẩn? |
 |---|---|---|---|---|---|---|
 | 1 | `run-1@20261128-002639` | `openai/gpt-5-mini` (qua OpenRouter) | code tại commit `b2a1e78`, 22 câu | 12/22 | 55% | Không: 12/22 < 80% · tu_choi 3/5 |
-| 2 | | | | __/__ | | |
+| 2 | `run-2@20261128-124725` | `openai/gpt-5-mini` (qua OpenRouter) | code tại `82b3bbf` (sau cải tiến), cùng 22 câu, CACHE tắt | 15/22 | 68% | Không: 15/22 < 80% · tu_choi 5/5 |
 
 - Theo type ở lượt 1: thuong 5/9 · kho 4/8 · tu_choi 3/5
 - Metric ở lượt 1: `tro_dung_code` 7/13 · `co_can_cu_slide` 8/13 · `hoi_lai_va_tu_choi_dung` 7/9 · `khong_sua_file_khung` 21/22 (câu trượt là B11 không có output; chưa thấy output nào bị metric này bắt vì gắn nhãn sửa file khung)
-- 1 câu lỗi kỹ thuật: B11 `TimeoutError`, vẫn tính là trượt, không sửa tay kết quả
+- 1 câu lỗi kỹ thuật ở lượt 1: B11 `TimeoutError`, vẫn tính là trượt, không sửa tay kết quả
+- Theo type ở lượt 2: thuong 5/9 · kho 5/8 · tu_choi 5/5 · 0 câu lỗi kỹ thuật
+- Metric ở lượt 2: `tro_dung_code` 7/13 · `co_can_cu_slide` 11/13 · `hoi_lai_va_tu_choi_dung` 9/9 · `khong_sua_file_khung` 22/22
+- Lượt 1 → 2: thêm qua B08, B11, B18, B22 · **tụt B19** (`main.py:ask` bị gắn cả `sua` và `doc`). Mỗi lượt chạy mỗi câu một lần, nên chênh lệch từng câu có thể do model trả khác nhau
+- Cách đọc cải tiến: giữa hai lượt có nhiều thay đổi cùng lúc (xem `spec.md` §10), không tách được tác động từng thay đổi. Luật từ chối mới là so từ khoá, viết sau khi thấy B18, B22 trượt: không so nguyên văn câu thử, nhưng chưa thử với câu tấn công diễn đạt khác. B11 hết lỗi có thể nhờ tăng thời gian chờ và sửa mã slide
 
 Lượt chạy lại vì lỗi kỹ thuật, lượt sau CP4: ghi thêm dòng, không sửa dòng cũ.
 
-## 6. Lỗi chính (lượt 1, 10 câu trượt)
+## 6. Lỗi chính
+
+### Lượt 1 (10 câu trượt)
 
 | Nhóm lỗi | Câu | Ghi chú |
 |---|---|---|
@@ -59,3 +65,11 @@ Lượt chạy lại vì lỗi kỹ thuật, lượt sau CP4: ghi thêm dòng, k
 | Lỗi kỹ thuật | B11 | Quá thời gian chờ |
 
 Điểm yếu của cách chấm: B02 qua hết metric code nhưng trượt `pass_criterion`, vì `tro_dung_code` chỉ cần 1 cặp đúng. Vì vậy bước người chấm là bắt buộc.
+
+### Còn lại ở lượt 2 (7 câu trượt)
+
+| Nhóm lỗi | Câu |
+|---|---|
+| Phải tạo hàm mới nhưng trỏ vào `main.py:ask` | B02, B14 |
+| Hỏi lại thay vì trả lời | B07, B15 |
+| Một hàm bị gắn cả `sua` và `doc` (hoặc không bác tiền đề sai ở B16) | B09, B16, B19 |

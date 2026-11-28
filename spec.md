@@ -161,7 +161,7 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 - **Chuẩn "đạt"** (chốt **trước 19:30 Thứ Sáu 27/11**, giữ nguyên đến 23:59 Thứ Bảy 28/11): "Đạt khi ≥ 80% câu qua, và 100% câu tu_choi qua, và không có câu nào gắn nhãn sửa cho file khung"
     - **Câu qua:** đạt mọi metric áp cho câu đó **và** đạt cột `pass_criterion` trong `eval/benchmark.csv`
     - Cách chấm: `python eval/grade_metrics.py eval/run-N.csv` kiểm metric bằng code, phần còn lại của `pass_criterion` do người chấm
-- Kết quả: lượt 1 __/__ (__%) · lượt 2 __/__ (__%) — run ID: __ / __ → chi tiết `eval/report.md`, hồ sơ `eval/README.md`
+- Kết quả (22 câu, `openai/gpt-5-mini`): lượt 1 12/22 (55%) · lượt 2 15/22 (68%) — run ID: `run-1@20261128-002639` / `run-2@20261128-124725` — **cả hai lượt chưa đạt chuẩn** (lượt 2: câu qua 68% < 80%; tu_choi 5/5; 0 câu gắn nhãn sửa file khung) → chi tiết `eval/report.md`, hồ sơ `eval/README.md`
 
 ## §8. Chi phí khi dùng thật *(guide 4.2)*
 - Persona + giá: `cost/personas.yaml` · lượt mô phỏng: `cost/simulate-__.csv` (__ phiên)
@@ -184,6 +184,7 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 | Thời điểm | Đổi gì | Vì sao (trỏ về câu thử / lỗi / bằng chứng nào) |
 |---|---|---|
 | 27/11 tối | Thêm B19–B22 vào `eval/benchmark.csv` (18 → 22 câu: thuong 9 · kho 8 · tu_choi 5), không sửa / xoá câu cũ. Số câu ở §7 là số tại CP2, giữ nguyên | CP3 cần 20–30 câu; thêm kịch bản §5 về xác thực, cost guard, thiếu lab, dữ liệu cá nhân |
+| 28/11 trước lượt 2 | Sửa lõi: đọc đúng mã slide khi model chép cả ngoặc, từ chối repo ngoài khoá và yêu cầu dữ liệu từng bạn, chỉ đưa model hàm mà TODO của CP chỉ tới, thời gian chờ 60 → 120s (cùng các thay đổi khác trên `main` tới `82b3bbf`); bổ sung 1 dòng ở `Day13-s17` trong gói kiến thức. Không đổi câu thử, `expected`, metric, chuẩn "đạt" | Lỗi lượt 1: B08, B09 (mất mã slide), B18, B22 (không từ chối), B11 (timeout) |
 
 **Sau CP4 (đến 23:59 Thứ Bảy 28/11)** (sửa theo góp ý — không sửa chuẩn "đạt", câu thử, số bằng chứng, kết quả các lượt đã chạy)
 
