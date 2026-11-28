@@ -46,7 +46,9 @@ def url(tmp_path):
 
     app = web.App(answer=answer, tim_repo=lambda lab, ten: str(tmp_path),
                   badge=lambda out: [{"khai_niem": "Khái niệm A", "badge": "chưa đủ dữ liệu"}],
-                  feynman=_fake_feynman())
+                  feynman=_fake_feynman(),
+                  preclass=lambda: {"co_du_lieu": True, "theo_day": [{"day": "Day06", "sai": 4, "tong": 6, "khai_niem": []}]},
+                  heatmap_app=lambda: {"du_du_lieu": False, "thong_bao": "chưa đủ dữ liệu", "tong_luot": 2, "top_ket": []})
     server = web.tao_server(app, 0)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{server.server_address[1]}"
@@ -107,3 +109,11 @@ def test_feynman_loc_theo_khai_niem(url):
     """Nút "Giải thích lại" trên 1 card → chỉ hỏi khái niệm đó; tên không khớp → phiên rỗng."""
     assert len(_post(url, "/api/feynman/bat-dau", {"ban_do": OUT, "khai_niem": "Khái niệm A"})[1]["cau"]) == 2
     assert _post(url, "/api/feynman/bat-dau", {"ban_do": OUT, "khai_niem": "Không có"})[1]["cau"] == []
+
+
+def test_heatmap_tra_hai_nguon_tach_bach(url):
+    """GET /api/heatmap → 2 nguồn riêng: preclass (data BTC) và app (log ẩn danh), đúng như hàm thống kê trả."""
+    with urllib.request.urlopen(url + "/api/heatmap") as r:
+        d = json.loads(r.read())
+    assert d["preclass"]["theo_day"][0]["day"] == "Day06" and (d["preclass"]["theo_day"][0]["sai"], d["preclass"]["theo_day"][0]["tong"]) == (4, 6)
+    assert d["app"]["du_du_lieu"] is False and d["app"]["tong_luot"] == 2

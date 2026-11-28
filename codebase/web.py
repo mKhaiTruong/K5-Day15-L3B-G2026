@@ -10,6 +10,7 @@ API (JSON):
     POST /api/hoi             {"text"}                 → bản đồ lõi + lộ trình + sơ đồ + badge + thống kê model
     POST /api/feynman/bat-dau {"ban_do", "khai_niem"?} → {"phien", "cau": [...]} (không lộ đáp án M3)
     POST /api/feynman/cham    {"phien", "i", "tra_loi"} → {"dat", "nhan_xet", "cau_hoi_tiep", "tro_lai"}
+    GET  /api/heatmap                                  → {"preclass": số gộp data BTC, "app": số gộp câu hỏi trên app}
     GET  /                    → codebase/web/index.html  ·  GET /<tên>.svg → ảnh trong codebase/web/
 """
 import json
@@ -42,9 +43,11 @@ class App:
         tim_repo: tools.tim_repo, để F1 đọc code vẽ sơ đồ.
         badge: f2_heatmap.badge_cho_output.
         feynman: module feynman (cần tao_cau_hoi, CHAM).
+        preclass: f2_preclass.thong_ke_preclass (lớp kẹt ở đâu, từ data preclass BTC).
+        heatmap_app: f2_heatmap.thong_ke_heatmap (lớp kẹt ở đâu, từ log ẩn danh của app).
     """
 
-    def __init__(self, answer=None, tim_repo=None, badge=None, feynman=None):
+    def __init__(self, answer=None, tim_repo=None, badge=None, feynman=None, preclass=None, heatmap_app=None):
         if answer is None:
             from agent import answer
         if tim_repo is None:
@@ -53,7 +56,12 @@ class App:
             from f2_heatmap import badge_cho_output as badge
         if feynman is None:
             import feynman
+        if preclass is None:
+            from f2_preclass import thong_ke_preclass as preclass
+        if heatmap_app is None:
+            from f2_heatmap import thong_ke_heatmap as heatmap_app
         self.answer, self.tim_repo, self.badge, self.feynman = answer, tim_repo, badge, feynman
+        self.preclass, self.heatmap_app = preclass, heatmap_app
         self.lock = threading.Lock()
         self.phien = {}  # phien_id → list câu hỏi Feynman (giữ ở server, chỉ trong bộ nhớ)
 
@@ -81,6 +89,14 @@ class App:
             "badge": {b["khai_niem"]: b["badge"] for b in self.badge(output)},
             "thong_ke": {k: thong_ke[k] for k in ("models", "model_calls", "tool_calls", "tokens_in", "tokens_out")},
         }
+
+    def heatmap(self) -> dict:
+        """Hai nguồn "lớp kẹt ở đâu", tách bạch, chỉ số gộp (không có trang xem từng người).
+
+        Returns:
+            {"preclass": thong_ke_preclass(), "app": thong_ke_heatmap()}.
+        """
+        return {"preclass": self.preclass(), "app": self.heatmap_app()}
 
     def feynman_bat_dau(self, ban_do: dict, khai_niem: str = "") -> dict:
         """Tạo phiên Feynman từ bản đồ của lõi; câu hỏi giữ ở server, client chỉ nhận phần công khai.
@@ -160,6 +176,11 @@ def tao_handler(app: App):
                         return self._gui(200, fh.read(), "text/html; charset=utf-8")
                 except OSError:
                     return self._gui(200, "<p>Chưa có codebase/web/index.html.</p>".encode(), "text/html; charset=utf-8")
+            if self.path.split("?")[0] == "/api/heatmap":
+                try:
+                    return self._json(200, app.heatmap())
+                except Exception as e:  # noqa: BLE001 — file data hỏng: báo cho UI, server vẫn chạy
+                    return self._json(500, {"loi": f"{type(e).__name__}: {e}"})
             ten = self.path.split("?")[0].lstrip("/")
             if re.fullmatch(r"[\w-]+\.svg", ten) and os.path.isfile(os.path.join(HERE, "web", ten)):
                 with open(os.path.join(HERE, "web", ten), "rb") as fh:  # chỉ .svg nằm ngay trong codebase/web/
@@ -202,11 +223,17 @@ def tao_server(app: App, port: int = 8000) -> ThreadingHTTPServer:
 
 
 def main(argv: list) -> int:
-    """CLI: python codebase/web.py [--port 8000] [--no-open]."""
+    """CLI: python codebase/web.py [--port 8000] [--no-open] [--no-log].
+
+    Mặc định bật log ẩn danh cho heatmap (HEATMAP_LOG=1: chỉ ghi lab, CP, tên khái niệm; không ghi câu hỏi,
+    không ghi người); --no-log để tắt.
+    """
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
     port = int(argv[argv.index("--port") + 1]) if "--port" in argv else 8000
+    if "--no-log" not in argv:
+        os.environ.setdefault("HEATMAP_LOG", "1")
     server = tao_server(App(), port)
     url = f"http://127.0.0.1:{server.server_address[1]}"
     print(f"Bản đồ bài giảng ↔ code đang chạy ở {url}  (Ctrl+C để dừng)")
