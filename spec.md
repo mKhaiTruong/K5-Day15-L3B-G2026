@@ -168,10 +168,10 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 - Kết quả (22 câu, `openai/gpt-5-mini`): lượt 1 12/22 (55%) · lượt 2 15/22 (68%) — run ID: `run-1@20261128-002639` / `run-2@20261128-124725` — **cả hai lượt chưa đạt chuẩn** (lượt 2: câu qua 68% < 80%; tu_choi 5/5; 0 câu gắn nhãn sửa file khung) → chi tiết `eval/report.md`, hồ sơ `eval/README.md`
 
 ## §8. Chi phí khi dùng thật *(guide 4.2)*
-- Persona + giá: `cost/personas.yaml` · lượt mô phỏng: `cost/simulate-__.csv` (__ phiên)
-- Chi phí / task thành công: __ (model __) · __ (model __)
-- Chi phí / tháng ở quy mô thật: thấp __ · cơ sở __ · cao __ → chi tiết `cost/cost-estimate.md`
-- So với impact / người / tháng (§2): đáng làm không, vì sao:
+- Persona + giá: `cost/personas.yaml` · lượt mô phỏng: `cost/simulate-1.csv` (50 phiên, `simulate-1@20261128-201545`; persona *(tự ước tính)*)
+- Chi phí / task thành công (tỉ lệ đạt lượt 2: 15/22): **$0,0134** (model `openai/gpt-5-mini`) · $0,0291 (giá `gpt-5.4-mini`, cùng số token)
+- Chi phí / tháng ở quy mô thật (`openai/gpt-5-mini`): thấp $31,63 (300 người) · cơ sở $73,81 (700) · cao $105,45 (1.000) → chi tiết `cost/cost-estimate.md`
+- So với impact / người / tháng (§2): chi phí $0,1054 so với ≈ 6,25 lượt "xong lab mà không nối được khái niệm với code" *(tự ước tính: giả định tỉ lệ 15/48 lặp lại ở mỗi lab)*. Chi phí model không phải rào cản; chưa triển khai rộng vì tỉ lệ đạt 68% dưới chuẩn 80% và chưa đo sản phẩm gỡ được bao nhiêu lượt
 
 ## §9. Rủi ro & an toàn
 - Dữ liệu: đã ẩn danh gì, không thu gì, không đưa gì vào model gói miễn phí:
@@ -211,3 +211,4 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 | Thời điểm | Đổi gì | Vì sao |
 |---|---|---|
 | 28/11 sau 14:30 | README hạng mục 7: thêm link video dự phòng CP4 (https://youtu.be/6WCbfzqKo7Y) và video CP3 (https://youtu.be/9zUn2nzibEI). Không đổi code, câu thử, kết quả | Video đã nộp ở form CP3 / CP4, ghi vào repo cho giám khảo xem |
+| 28/11 tối | Chạy `simulate` 50 phiên (`simulate-1`), điền `cost/cost-estimate.md`, §8 và slide trang 6; ghi nguồn số lượt dùng của persona là (tự ước tính). Không đổi code lõi, câu thử, metric, chuẩn "đạt", kết quả lượt 1–2 | Tại CP4 chưa có kết quả mô phỏng: hai lần chạy trước bị dừng do máy thiếu bộ nhớ, không lưu kết quả |
