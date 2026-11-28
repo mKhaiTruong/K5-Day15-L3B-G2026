@@ -369,3 +369,31 @@ def test_lay_repo_github_tu_choi_link_sai_dang(tmp_path, monkeypatch):
     for url in ("http://github.com/a/b", "https://gitlab.com/a/b", "https://github.com/a/b/../../c", "file:///etc"):
         assert tools.lay_repo_github(url) == ""
     assert list(tmp_path.iterdir()) == []
+
+
+def _git(repo, *args):
+    import subprocess
+    subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True,
+                   env=dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
+                            GIT_COMMITTER_EMAIL="t@t"))
+
+
+def test_da_xoa_todo_thi_loc_ham_theo_git_diff(labs):
+    """Repo học viên: commit đầu = đề (có TODO), commit sau viết a() + xoá TODO → CP1 chỉ còn hàm đã viết,
+    hàm có sẵn không đổi (helper) bị bỏ; da_viet liệt kê đúng file:hàm."""
+    f = labs / "app" / "rate_limiter.py"
+    _write(f, "# TODO CP1: viết hàm dưới đây\ndef a():\n    pass\n\ndef helper():\n    return 1\n")
+    _git(labs, "init", "-q")
+    _git(labs, "add", "-A")
+    _git(labs, "commit", "-qm", "đề")
+    _write(f, "def a():\n    return helper() + 1\n\ndef helper():\n    return 1\n")
+    _git(labs, "commit", "-qam", "làm CP1")
+    info = tools.doc_cp(str(labs), "CP1")
+    assert [h["ham"] for h in info["ham"]] == ["a"] and info["da_viet"] == ["app/rate_limiter.py:a"]
+
+
+def test_khong_phai_git_hoac_1_commit_thi_giu_nhu_cu(labs):
+    """Không có .git → da_viet rỗng, danh sách hàm như cũ."""
+    _write(labs / "app" / "rate_limiter.py", "def a():\n    pass\n\ndef helper():\n    pass\n")
+    info = tools.doc_cp(str(labs), "CP1")
+    assert info["da_viet"] == [] and [h["ham"] for h in info["ham"]] == ["a", "helper"]

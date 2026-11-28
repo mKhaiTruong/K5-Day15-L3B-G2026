@@ -216,6 +216,8 @@ def answer(text: str) -> dict:
         or "(không có)",
         "\n".join(khung) or "(không có)",
         "\n".join("[{}] {}".format(s["ma"], s["text"]) for s in slides) or "(chưa có slide)")
+    if not cp_info.get("todo") and cp_info.get("da_viet"):  # repo đã làm xong, TODO bị xoá → dựa vào git diff
+        user += "\n\nHàm học viên đã viết (khác commit đầu của repo, gắn nhãn sua):\n" + "\n".join(cp_info["da_viet"])
     khai_niem = _parse_json(_goi_model(SYSTEM, user))
     if khai_niem is None:
         note("model không trả JSON — dùng ghép dự phòng")
