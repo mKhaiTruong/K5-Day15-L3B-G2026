@@ -47,6 +47,8 @@ SLIDE_CODE = re.compile(r"\bDay\d+-s\d+\b")
 TEST_FILE = re.compile(r"(^|/)tests?/|(^|/)test_[^/]*\.py$")
 CONFIRM = re.compile(r"đúng không|phải không|có phải", re.IGNORECASE)
 EDIT_WORDS = re.compile(r"\b(sửa|chỉnh|edit|modify|xoá|xóa)\b", re.IGNORECASE)
+PRIVATE = re.compile(r"từng bạn|(bạn|người) nào (đã )?hỏi|\bai (đang )?(hỏi|kẹt)|xếp hạng|ranking",
+                     re.IGNORECASE)
 STOP = {"code", "file", "files", "repo", "trong", "giúp", "mình", "muốn", "khác", "nhau", "những",
         "được", "nằm", "đâu", "này", "check", "với", "chỗ", "nào", "hiểu", "lab", "của"}
 
@@ -59,10 +61,12 @@ def _parse(text: str) -> dict:
     """Tách mã lab, mã CP, tên repo từ câu của học viên."""
     lab = re.search(r"\bday\s?0?(\d{1,2})\b", text, re.IGNORECASE)
     cp = re.search(r"\bCP\s?(\d+)\b", text, re.IGNORECASE)
-    repo = re.search(r"\brepo\s+([\w.-]+)", text, re.IGNORECASE)
+    url = re.search(r"github\.com/[\w.-]+/([\w.-]+)", text, re.IGNORECASE)
+    repo = re.search(r"\brepo\s+([A-Za-z0-9._-]+)(?=[\s,;:!?)]|$)", text, re.IGNORECASE)
+    ten_repo = (url or repo).group(1).rstrip(".") if (url or repo) else ""
     return {"lab": f"Day{int(lab.group(1)):02d}" if lab else "",
             "cp": f"CP{cp.group(1)}" if cp else "",
-            "ten_repo": repo.group(1) if repo else ""}
+            "ten_repo": ten_repo}
 
 
 def _tokens(text: str) -> list:
@@ -152,10 +156,15 @@ def answer(text: str) -> dict:
     if ATTACK.search(text):
         return _out({"tu_choi": "Mình chỉ chỉ đường và giải thích, không làm hộ bài hay lách script chấm. "
                                 "Hãy chọn CP và khái niệm bạn muốn hiểu."})
+    if PRIVATE.search(text):
+        return _out({"tu_choi": "Mình không đưa câu hỏi của từng bạn hay xếp hạng học viên, "
+                                "chỉ có số gộp ẩn danh theo CP. Bạn muốn hiểu khái niệm nào?"})
 
     # Bước 1: tìm repo, kiểm có phải lab
     if not p["lab"] and not p["ten_repo"]:
         return _out({"can_hoi_lai": "Bạn đang làm lab ngày mấy (vd Day14) và CP nào?"})
+    if p["ten_repo"] and not tim_repo("", p["ten_repo"]):  # nêu repo ngoài khoá → không rơi về mã lab
+        return _out({"tu_choi": f"Repo {p['ten_repo']} không phải lab của khoá, mình không hỗ trợ."})
     repo = tim_repo(p["lab"], p["ten_repo"])
     if not repo:
         return _out({"tu_choi": "Chưa có %s trong hệ thống, mình chỉ hỗ trợ lab đã có gói kiến thức."
