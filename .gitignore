@@ -40,3 +40,4 @@ data/labs/
 data/heatmap/
 data/cache/
 .pytest_cache/
+data/repos/

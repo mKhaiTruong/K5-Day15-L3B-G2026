@@ -78,6 +78,7 @@ flowchart TD
   | Công cụ | Input | Output | Tác động ra ngoài? |
   |---|---|---|---|
   | `tim_repo` | mã lab (`Day14`) hoặc tên repo | đường dẫn repo trong `LABS_DIR`, rỗng nếu không có | Không |
+  | `lay_repo_github` | link `https://github.com/<owner>/<repo>` (repo lab của học viên, tên có `DAYnn`) | đường dẫn bản tải về, rỗng nếu lỗi / riêng tư | Có: tải từ mạng, ghi vào `data/repos/` (chỉ đọc repo) |
   | `doc_cau_truc_lab` | đường dẫn repo | cây file, nội dung README / CHECKPOINTS, `la_lab` (bool) | Không |
   | `doc_cp` | repo, mã CP | đoạn mô tả CP + file có `TODO` của CP | Không |
   | `tim_file_khung` | repo | danh sách file ghi "không sửa" trong README / AGENTS | Không |

@@ -90,6 +90,43 @@ def tim_repo(lab: str = "", ten_repo: str = "") -> str:
     return ""
 
 
+GITHUB_URL = re.compile(r"^https://github\.com/([\w.-]+)/([\w.-]+?)(?:\.git)?/?$")
+
+
+def _repos_dir() -> str:
+    return os.environ.get("REPOS_DIR") or os.path.join(ROOT, "data", "repos")
+
+
+@tool
+def lay_repo_github(url: str) -> str:
+    """Tải repo lab của học viên từ GitHub (repo công khai) về thư mục cache để đọc.
+
+    Input: url dạng https://github.com/<owner>/<repo>. Output: đường dẫn thư mục đã tải, "" nếu lỗi
+    (link sai dạng, repo riêng tư, mất mạng, quá 120 giây).
+    Clone `--filter=blob:none`: đủ lịch sử commit cho git diff, chỉ tải nội dung file khi cần.
+    Đã có bản cũ thì `git pull --ff-only`. Không hỏi mật khẩu (GIT_TERMINAL_PROMPT=0).
+    Tác động ra ngoài: CÓ — tải từ mạng, ghi vào REPOS_DIR (mặc định data/repos, gitignored);
+    chỉ đọc repo, không ghi gì lên GitHub.
+    """
+    import subprocess
+
+    m = GITHUB_URL.match(url.strip())
+    if not m:
+        return ""
+    dest = os.path.join(_repos_dir(), f"{m.group(1)}__{m.group(2)}")
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
+    lenh = (["git", "-C", dest, "pull", "--ff-only", "--quiet"] if os.path.isdir(os.path.join(dest, ".git")) else
+            ["git", "clone", "--filter=blob:none", "--quiet", f"https://github.com/{m.group(1)}/{m.group(2)}.git", dest])
+    os.makedirs(_repos_dir(), exist_ok=True)
+    try:
+        r = subprocess.run(lenh, check=False, env=env, capture_output=True, timeout=120)
+    except (OSError, subprocess.TimeoutExpired):
+        return dest if os.path.isdir(os.path.join(dest, ".git")) else ""
+    if r.returncode and not os.path.isdir(os.path.join(dest, ".git")):
+        return ""
+    return dest  # pull lỗi (mất mạng) nhưng đã có bản cũ → vẫn đọc bản cũ
+
+
 @tool
 def doc_cau_truc_lab(repo: str) -> dict:
     """Đọc cấu trúc repo và xác định có phải repo lab không.

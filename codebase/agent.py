@@ -21,6 +21,7 @@ from tools import (
     doc_cp,
     ghi_cau_hoi_an_danh,
     kiem_ham_ton_tai,
+    lay_repo_github,
     ma_slide_ton_tai,
     tim_file_khung,
     tim_repo,
@@ -44,6 +45,7 @@ Trả về DUY NHẤT một JSON:
 ATTACK = re.compile(r"bỏ qua (mọi |các )?(hướng dẫn|chỉ dẫn)|ignore (all |previous )?instructions|"
                     r"(viết|làm|giải|code) hộ|in luôn pass|cho nó (in|báo) pass", re.IGNORECASE)
 SLIDE_CODE = re.compile(r"\bDay\d+-s\d+\b")
+LAB_REPO = re.compile(r"day[\s_-]?0?(\d{1,2})(?!\d)", re.IGNORECASE)  # tên repo lab: K5-L3B-DAY13-...
 TEST_FILE = re.compile(r"(^|/)tests?/|(^|/)test_[^/]*\.py$")
 CONFIRM = re.compile(r"đúng không|phải không|có phải", re.IGNORECASE)
 EDIT_WORDS = re.compile(r"\b(sửa|chỉnh|edit|modify|xoá|xóa)\b", re.IGNORECASE)
@@ -61,12 +63,15 @@ def _parse(text: str) -> dict:
     """Tách mã lab, mã CP, tên repo từ câu của học viên."""
     lab = re.search(r"\bday\s?0?(\d{1,2})\b", text, re.IGNORECASE)
     cp = re.search(r"\bCP\s?(\d+)\b", text, re.IGNORECASE)
-    url = re.search(r"github\.com/[\w.-]+/([\w.-]+)", text, re.IGNORECASE)
+    url = re.search(r"github\.com/([\w.-]+)/([\w.-]+)", text, re.IGNORECASE)
     repo = re.search(r"\brepo\s+([A-Za-z0-9._-]+)(?=[\s,;:!?)]|$)", text, re.IGNORECASE)
-    ten_repo = (url or repo).group(1).rstrip(".") if (url or repo) else ""
+    ten_repo = (url.group(2) if url else repo.group(1) if repo else "").rstrip(".").removesuffix(".git")
+    if not lab and url:  # chỉ dán link repo lab (vd K5-L3B-DAY13-...) → lấy mã lab từ tên repo
+        lab = LAB_REPO.search(ten_repo)
     return {"lab": f"Day{int(lab.group(1)):02d}" if lab else "",
             "cp": f"CP{cp.group(1)}" if cp else "",
-            "ten_repo": ten_repo}
+            "ten_repo": ten_repo,
+            "url": f"https://github.com/{url.group(1)}/{ten_repo}" if url else ""}
 
 
 def _tokens(text: str) -> list:
@@ -163,9 +168,14 @@ def answer(text: str) -> dict:
     # Bước 1: tìm repo, kiểm có phải lab
     if not p["lab"] and not p["ten_repo"]:
         return _out({"can_hoi_lai": "Bạn đang làm lab ngày mấy (vd Day14) và CP nào?"})
-    if p["ten_repo"] and not tim_repo("", p["ten_repo"]):  # nêu repo ngoài khoá → không rơi về mã lab
+    if p["url"] and LAB_REPO.search(p["ten_repo"]):  # link repo lab của chính học viên (đã làm xong) → tải về đọc
+        repo = lay_repo_github(p["url"])
+        if not repo:
+            return _out({"tu_choi": f"Không tải được {p['url']}. Repo phải công khai và đúng link GitHub."})
+    elif p["ten_repo"] and not tim_repo("", p["ten_repo"]):  # nêu repo ngoài khoá → không rơi về mã lab
         return _out({"tu_choi": f"Repo {p['ten_repo']} không phải lab của khoá, mình không hỗ trợ."})
-    repo = tim_repo(p["lab"], p["ten_repo"])
+    else:
+        repo = tim_repo(p["lab"], p["ten_repo"])
     if not repo:
         return _out({"tu_choi": "Chưa có %s trong hệ thống, mình chỉ hỗ trợ lab đã có gói kiến thức."
                                 % (p["lab"] or p["ten_repo"])})
