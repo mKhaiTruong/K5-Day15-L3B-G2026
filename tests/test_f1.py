@@ -135,10 +135,10 @@ def _trang():
 
 
 def test_html_co_sidebar_cp_va_so_do():
-    """Sidebar có link tới từng CP (CP rỗng ghi chú 'chưa có lộ trình'); CP có bước thì có khối Mermaid."""
+    """Sidebar có link tới từng CP: CP có lộ trình gắn ✅, CP rỗng ghi 'chưa nối được'; CP có bước thì có Mermaid."""
     h = _trang()
-    assert '<a href="#cp-cp1" aria-current="true">CP1</a>' in h
-    assert 'href="#cp-cp3">CP3 <span class="rong">(chưa có lộ trình)</span>' in h
+    assert '<a href="#cp-cp1" aria-current="true">✅ CP1</a>' in h
+    assert 'href="#cp-cp3">CP3 <span class="rong">· chưa nối được</span>' in h
     assert '<pre class="mermaid">flowchart LR' in h and f1.MERMAID_CDN in h
 
 
@@ -162,3 +162,69 @@ def test_html_thoat_ky_tu_va_link_bao_sai():
                                                            "ham": ["mo_hinh"], "slide": []})
     assert link.startswith(f1.ISSUE_URL + "?title=")
     assert "Day13" in link and "src%2Flab13.py" in link and "khong_co_can_cu" in link
+
+
+LAB_GOI_HAM = (
+    "# TODO CP1: viết ba hàm dưới đây\n"
+    "def so_lan(p):\n    return 1 / p\n\n"
+    "def ti_le(p):\n    return p\n\n"
+    "def he_so(p):\n    return so_lan(p) / ti_le(p)\n\n"
+    "def _lam_tron(x):\n    return round(x, 2)\n\n"
+    "def mo_hinh(p):\n    return _lam_tron(he_so(p)) + obj.khong_tinh()\n"
+)
+
+
+def _lt_goi_ham(tmp_path, ham=("mo_hinh", "he_so", "so_lan", "ti_le")):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "lab.py").write_text(LAB_GOI_HAM, encoding="utf-8")
+    return f1.lo_trinh({"khai_niem": [_kn("k", "Day13-s14", *[("src/lab.py", h, "sua") for h in ham])],
+                        "khong_dung": ["src/starter.py"]})
+
+
+def test_do_thi_goi_ham_noi_ham_goi_ham_va_them_ham_phu(tmp_path):
+    """Cạnh = hàm trái gọi hàm phải (đọc ast); hàm phụ được gọi tới thêm vào với nhãn 'phu';
+    gọi qua thuộc tính (obj.khong_tinh()) không thành ô."""
+    dt = f1.do_thi_goi_ham(str(tmp_path), _lt_goi_ham(tmp_path)["buoc"])
+    ten = {n["id"]: n["ham"] for n in dt["nut"]}
+    canh = {(ten[a], ten[b]) for a, b in dt["canh"]}
+    assert canh == {("mo_hinh", "he_so"), ("mo_hinh", "_lam_tron"), ("he_so", "so_lan"), ("he_so", "ti_le")}
+    assert {n["ham"]: n["nhan"] for n in dt["nut"]}["_lam_tron"] == "phu"
+    assert "khong_tinh" not in ten.values()
+
+
+def test_do_thi_goi_ham_toi_da_9_o(tmp_path):
+    """Giới hạn số ô: toi_da=2 → chỉ 2 ô, cạnh chỉ nối giữa các ô còn lại."""
+    dt = f1.do_thi_goi_ham(str(tmp_path), _lt_goi_ham(tmp_path)["buoc"], toi_da=2)
+    assert len(dt["nut"]) == 2 and all(a != b for a, b in dt["canh"])
+
+
+def test_so_do_it_file_ve_cap_ham_nhieu_file_ve_cap_file(tmp_path):
+    """Lộ trình ≤2 file → sơ đồ cấp hàm có khung file + ô hàm; >2 file → giữ sơ đồ cấp file."""
+    sd = f1.so_do(str(tmp_path), _lt_goi_ham(tmp_path))
+    assert sd["cap"] == "ham" and 'subgraph F1["src/lab.py"]' in sd["mermaid"] and "✏️ mo_hinh()" in sd["mermaid"]
+    assert "⛔ Đừng đụng" in sd["mermaid"]
+    lt3 = f1.lo_trinh({"khai_niem": [_kn("k", "khong_co_can_cu", ("a.py", "x", "doc"), ("b.py", "y", "doc"),
+                                         ("c.py", "z", "sua"))]})
+    assert f1.so_do(str(tmp_path), lt3)["cap"] == "file"
+
+
+def test_chay_lab_lay_cp_tu_output_loi_va_ghi_ro_cp_rong(tmp_path):
+    """Danh sách CP lấy từ can_hoi_lai của lõi; CP không nối được ghi CP_RONG thay cho câu hỏi lại."""
+    import json
+
+    _lt_goi_ham(tmp_path)
+
+    def answer(text):
+        if "CP" not in text.split(".")[0] and "CP1" not in text and "CP2" not in text:
+            out = {"can_hoi_lai": "Bạn đang làm CP nào? Lab này có: CP1, CP2"}
+        elif "CP1" in text:
+            out = {"lab": "Day99", "cp": "CP1", "khong_dung": [],
+                   "khai_niem": [_kn("k", "Day99-s1", ("src/lab.py", "mo_hinh", "sua"))]}
+        else:
+            out = {"lab": "Day99", "cp": "CP2", "khai_niem": [], "can_hoi_lai": "Bạn hỏi cụ thể hơn?"}
+        return {"output": json.dumps(out, ensure_ascii=False)}
+
+    muc = f1.chay_lab("Day99", answer=answer, tim_repo=lambda lab, ten: str(tmp_path))
+    assert [m["cp"] for m in muc] == ["CP1", "CP2"]
+    assert muc[0]["chu_thich"].startswith("Mỗi khung là 1 file") and "mo_hinh()" in muc[0]["mermaid"]
+    assert muc[1]["lt"]["loi_nhan"] == f1.CP_RONG and muc[1]["mermaid"] == ""

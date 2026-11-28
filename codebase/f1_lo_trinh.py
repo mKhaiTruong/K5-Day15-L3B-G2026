@@ -188,6 +188,119 @@ def ve_mermaid(lt: dict, canh: list) -> str:
     return "\n".join(lines)
 
 
+MAX_NUT = 9  # >9 ô thì sơ đồ nên tách đôi (nguyên tắc mật độ ~4/10)
+CAP_HAM_TOI_DA_FILE = 2  # lộ trình ≤2 file → vẽ cấp hàm; nhiều hơn → cấp file (import)
+
+
+def do_thi_goi_ham(repo: str, buoc: list, toi_da: int = MAX_NUT) -> dict:
+    """Tìm hàm nào gọi hàm nào giữa các hàm trong lộ trình (đọc bằng ast, không chạy code lab).
+
+    Ô chính = hàm lõi đã trỏ tới (nhãn của bước: sua / doc). Nếu còn chỗ (≤ toi_da ô), thêm hàm
+    cùng file mà các hàm chính gọi tới, nhãn "phu" (để thấy hàm phải viết dựa vào đâu).
+    Chỉ tính lời gọi trực tiếp theo tên `ham(...)`; gọi qua thuộc tính (`obj.ham()`) bỏ qua.
+
+    Args:
+        repo: Đường dẫn repo lab.
+        buoc: lo_trinh(...)["buoc"].
+        toi_da: Số ô tối đa.
+
+    Returns:
+        {"nut": [{"id": "n1", "file", "ham", "nhan"}], "canh": [("n1", "n2"), ...]}; cạnh = ô trái gọi ô phải.
+        Vd Day13 CP1: mo_hinh → he_so_chi_phi_moi_viec_thanh_cong → so_lan_chay_ky_vong.
+    """
+    defs = {}  # (file, ten) -> ast node
+    for b in buoc:
+        if not b["file"].endswith(".py") or any(f == b["file"] for f, _ in defs):
+            continue
+        try:
+            with open(os.path.join(repo, b["file"]), encoding="utf-8-sig", errors="replace") as fh:
+                tree = ast.parse(fh.read())
+        except (OSError, SyntaxError, ValueError):
+            continue
+        for n in tree.body:
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                defs[(b["file"], n.name)] = n
+    chinh = [(b["file"], h, b["nhan"]) for b in buoc for h in b["ham"] if (b["file"], h) in defs]
+    ten_chinh = {}  # tên → (file, tên), chỉ khi tên là duy nhất trong lộ trình (để nối khác file)
+    for f, h, _ in chinh:
+        ten_chinh[h] = None if h in ten_chinh else (f, h)
+
+    def goi(f: str, h: str) -> list:
+        ra = []
+        for c in ast.walk(defs[(f, h)]):
+            if isinstance(c, ast.Call) and isinstance(c.func, ast.Name) and c.func.id != h:
+                dich = (f, c.func.id) if (f, c.func.id) in defs else ten_chinh.get(c.func.id)
+                if dich and dich not in ra:
+                    ra.append(dich)
+        return ra
+
+    nut = {(f, h): nhan for f, h, nhan in chinh[:toi_da]}
+    for f, h, _ in chinh[:toi_da]:
+        for d in goi(f, h):
+            if d not in nut and len(nut) < toi_da:
+                nut[d] = "phu"
+    ids = {k: f"n{i}" for i, k in enumerate(nut, 1)}
+    canh = [(ids[k], ids[d]) for k in nut for d in goi(*k) if d in ids]
+    return {"nut": [{"id": ids[k], "file": k[0], "ham": k[1], "nhan": v} for k, v in nut.items()],
+            "canh": canh}
+
+
+MAU_GATSBY = {"doc": "#D1DFE4", "sua": "#EEEADD", "phu": "#FFFFFF", "khung": "#E4D1D1",
+              "net": "#28303D", "loi": "#A0474A"}
+
+
+def ve_mermaid_ham(do_thi: dict, khong_dung: list = (), mau: dict = MAU_GATSBY) -> str:
+    """Vẽ sơ đồ cấp hàm: mỗi file 1 khung, mỗi hàm 1 ô, mũi tên = gọi hàm.
+
+    Chỉ ô ✏️ sửa được tô màu nhấn (1–2 điểm nhấn mỗi sơ đồ); 📖 đọc tô nhạt; hàm phụ để trắng.
+
+    Args:
+        do_thi: Kết quả do_thi_goi_ham().
+        khong_dung: File khung, gom vào 1 ô ⛔ riêng.
+        mau: Bảng màu {"doc", "sua", "phu", "khung", "net", "loi"} (mặc định theme gatsby).
+
+    Returns:
+        Chuỗi Mermaid "flowchart LR", hoặc "" nếu không có ô nào.
+    """
+    if not do_thi.get("nut"):
+        return ""
+    lines = ["flowchart LR"]
+    icon = {"sua": "✏️ ", "doc": "📖 ", "phu": ""}
+    for i, f in enumerate(dict.fromkeys(n["file"] for n in do_thi["nut"]), 1):
+        lines.append(f'    subgraph F{i}["{_esc(f)}"]')
+        lines += [f'        {n["id"]}["{icon[n["nhan"]]}{_esc(n["ham"])}()"]:::{n["nhan"]}'
+                  for n in do_thi["nut"] if n["file"] == f]
+        lines.append("    end")
+    lines += [f"    {a} --> {b}" for a, b in do_thi["canh"]]
+    if khong_dung:
+        ds = "<br/>".join(_esc(f) for f in list(khong_dung)[:6])
+        more = f"<br/>… +{len(khong_dung) - 6}" if len(khong_dung) > 6 else ""
+        lines.append(f'    K["⛔ Đừng đụng<br/>{ds}{more}"]:::khung')
+    net = mau["net"]
+    lines += [f"    classDef sua fill:{mau['sua']},stroke:{net},stroke-width:3px,color:{net}",
+              f"    classDef doc fill:{mau['doc']},stroke:{net},stroke-width:1px,color:{net}",
+              f"    classDef phu fill:{mau['phu']},stroke:{net},stroke-width:1px,stroke-dasharray:4 3,color:{net}",
+              f"    classDef khung fill:{mau['khung']},stroke:{mau['loi']},stroke-width:2px,color:{net}"]
+    return "\n".join(lines)
+
+
+def so_do(repo: str, lt: dict) -> dict:
+    """Chọn cấp sơ đồ cho 1 lộ trình: ≤2 file → cấp hàm (gọi hàm), nhiều hơn → cấp file (import).
+
+    Returns:
+        {"mermaid": str, "cap": "ham" | "file", "chu_thich": str}; mermaid rỗng nếu lộ trình rỗng.
+    """
+    files = [b["file"] for b in lt.get("buoc", [])]
+    if files and len(files) <= CAP_HAM_TOI_DA_FILE:
+        dt = do_thi_goi_ham(repo, lt["buoc"])
+        if dt["nut"]:
+            return {"mermaid": ve_mermaid_ham(dt, lt.get("khong_dung") or []), "cap": "ham",
+                    "chu_thich": "Mỗi khung là 1 file, mỗi ô là 1 hàm. Mũi tên: hàm này gọi hàm kia. "
+                                 "Ô viền đứt: hàm phụ được gọi tới, không nằm trong lộ trình."}
+    return {"mermaid": ve_mermaid(lt, do_thi_import(repo, files)), "cap": "file",
+            "chu_thich": "Mũi tên đứt: thứ tự đọc. Mũi tên liền: file này import file kia."}
+
+
 def _esc(text: str) -> str:
     """Thoát ký tự làm vỡ nhãn Mermaid (ngoặc kép, <, >)."""
     return str(text).replace("&", "&amp;").replace('"', "#quot;").replace("<", "&lt;").replace(">", "&gt;")
@@ -279,10 +392,11 @@ def ve_html(lab: str, muc: list, issue_url: str = ISSUE_URL) -> str:
     for i, m in enumerate(muc):
         cp, lt = m["cp"], m["lt"]
         sid = "cp-" + "".join(ch for ch in cp.lower() if ch.isalnum())
-        rong = "" if lt.get("buoc") else ' <span class="rong">(chưa có lộ trình)</span>'
+        nhan_cp = f"✅ {e(cp)}" if lt.get("buoc") else f'{e(cp)} <span class="rong">· chưa nối được</span>'
         cur = ' aria-current="true"' if i == 0 else ""
-        nav.append(f'<li><a href="#{sid}"{cur}>{e(cp)}{rong}</a></li>')
-        body.append(_ve_cp(lab, cp, sid, lt, m.get("mermaid", ""), issue_url))
+        nav.append(f'<li><a href="#{sid}"{cur}>{nhan_cp}</a></li>')
+        body.append(_ve_cp(lab, cp, sid, lt, m.get("mermaid", ""), issue_url,
+                           m.get("chu_thich") or "Mũi tên đứt: thứ tự đọc. Mũi tên liền: file này import file kia."))
     return f"""<!doctype html>
 <html lang="vi">
 <head>
@@ -320,7 +434,7 @@ def ve_html(lab: str, muc: list, issue_url: str = ISSUE_URL) -> str:
 """
 
 
-def _ve_cp(lab: str, cp: str, sid: str, lt: dict, mermaid: str, issue_url: str) -> str:
+def _ve_cp(lab: str, cp: str, sid: str, lt: dict, mermaid: str, issue_url: str, chu_thich: str = "") -> str:
     """Một section CP: sơ đồ (điểm nhấn) → các bước đánh số → ô file khung → chỗ cho F2 / F3."""
     e = html.escape
     out = [f'<section class="cp" id="{sid}"><h2>{e(cp)}</h2>']
@@ -329,7 +443,7 @@ def _ve_cp(lab: str, cp: str, sid: str, lt: dict, mermaid: str, issue_url: str) 
     else:
         out.append('<div class="flow-wrap"><span class="crop tl"></span><span class="crop br"></span>'
                    f'<figure class="flow"><pre class="mermaid">{e(mermaid)}</pre></figure></div>'
-                   '<p class="chu-thich">Mũi tên đứt: thứ tự đọc. Mũi tên liền: file này import file kia.</p>')
+                   f'<p class="chu-thich">{e(chu_thich)}</p>')
         out.append('<ol class="steps">')
         for b in lt["buoc"]:
             nhan = "✏️ Sửa" if b["nhan"] == "sua" else "📖 Đọc"
@@ -361,3 +475,74 @@ def _link_bao_sai(issue_url: str, lab: str, cp: str, b: dict) -> str:
     body = (f"Lab: {lab}\nCP: {cp}\nFile: {b['file']} ({b['nhan']})\nHàm: {', '.join(b['ham'])}\n"
             f"Slide: {', '.join(b['slide']) or 'khong_co_can_cu'}\n\nSai ở đâu (nhãn / hàm / slide), đúng ra là gì:\n")
     return issue_url + "?" + urllib.parse.urlencode({"title": title, "body": body})
+
+
+CP_RONG = ("Chưa nối được khái niệm nào của CP này với hàm Python. "
+           "CP có thể làm trên file khác (.md, .docx…) hoặc chưa có slide tương ứng — xem đề của CP.")
+CAU_HOI_CP = "Lab {lab}, {cp}. Khái niệm trong bài giảng của CP này nằm ở file nào, hàm nào?"
+
+
+def chay_lab(lab: str, answer=None, tim_repo=None) -> list:
+    """Chạy lõi cho mọi CP của 1 lab, trả các mục để đưa vào ve_html().
+
+    Danh sách CP lấy từ chính output của lõi: hỏi "Lab DayNN" không kèm CP → lõi trả
+    can_hoi_lai "Lab này có: CP1, CP2…". Lab không chia CP → 1 mục cho cả repo.
+
+    Args:
+        lab: Mã lab, vd "Day13".
+        answer: Hàm answer(text) của lõi (mặc định agent.answer; test truyền hàm giả).
+        tim_repo: Công cụ tim_repo của lõi, để đọc code vẽ sơ đồ (mặc định tools.tim_repo).
+
+    Returns:
+        List {"cp", "lt", "mermaid", "chu_thich"}, theo thứ tự CP.
+    """
+    import json
+    import re
+
+    if answer is None or tim_repo is None:
+        from agent import answer as _answer
+        from tools import tim_repo as _tim_repo
+        answer, tim_repo = answer or _answer, tim_repo or _tim_repo
+    repo = tim_repo(lab, "")
+    dau = json.loads(answer(f"Lab {lab}. Lab này có những CP nào?")["output"])
+    if "tu_choi" in dau:
+        return [{"cp": lab, "lt": lo_trinh(dau), "mermaid": "", "chu_thich": ""}]
+    cps = list(dict.fromkeys(re.findall(r"\bCP\d+\b", dau.get("can_hoi_lai") or "")))
+    muc = []
+    for cp in cps or [""]:
+        out = dau if not cps else json.loads(answer(CAU_HOI_CP.format(lab=lab, cp=cp))["output"])
+        lt = lo_trinh(out)
+        if not lt["buoc"] and "tu_choi" not in out:
+            lt["loi_nhan"] = CP_RONG
+        muc.append({"cp": cp or lab, "lt": lt, **(so_do(repo, lt) if repo and lt["buoc"] else
+                                                  {"mermaid": "", "chu_thich": ""})})
+    return muc
+
+
+def main(argv: list) -> int:
+    """CLI: python codebase/f1_lo_trinh.py Day13 [--out data/f1/Day13.html]. Nên bật CACHE=1 cho đỡ tốn token."""
+    import sys
+
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+    if not argv or argv[0].startswith("-"):
+        print(main.__doc__)
+        return 1
+    lab = argv[0]
+    out = argv[argv.index("--out") + 1] if "--out" in argv else os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "f1", f"{lab}.html")
+    muc = chay_lab(lab)
+    os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
+    with open(out, "w", encoding="utf-8") as fh:
+        fh.write(ve_html(lab, muc))
+    co = sum(1 for m in muc if m["lt"]["buoc"])
+    print(f"Đã ghi {out} · {co}/{len(muc)} CP có lộ trình")
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    raise SystemExit(main(sys.argv[1:]))
