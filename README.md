@@ -1,35 +1,8 @@
-> Đây là khung repo nộp bài. Điền mọi chỗ `____`, giữ nguyên tên các mục. **Mục 0 xoá đi sau khi tạo repo xong.**
-> Giờ, mốc, luật, rubric: xem `README.md`, `02-guide.md`, `03-rubric.md` trong repo đề (bộ đề BTC phát).
-
-# [Tên nhóm] — [Tên lát cắt]
+# G2026 — Bản đồ bài giảng ↔ code lab theo CP
 
 **Thành viên, lớp, track:** xem [TEAMS.md](TEAMS.md). **Điền TEAMS.md đúng format**: khi chấm và đánh giá, BTC quét file này để ghép điểm cho từng người.
 
 *Lát cắt = phần nhỏ nhất làm xong được trong hackathon: một người dùng · một việc · một quyết định AI · một kết quả.*
-
----
-
-## 0. Tạo repo nhóm từ khung này *(guide bước 1.0 — xoá mục này khi xong)*
-
-**Hai luật:** repo **mới, công khai (Public)** · tên `K5-Day15-<lớp>-<tên nhóm>`, vd `K5-Day15-L3A-StudyPulse` (tên nhóm viết liền, không dấu). Chép **nội dung bên trong** `starter-repo/` — `README.md`, `run.py` phải nằm ngay ở trang đầu repo.
-
-**(a) Không cần terminal — làm trên web GitHub**
-1. **New repository** → tên theo mẫu → **Public** → không tick thêm gì → tạo.
-2. Trên máy mở thư mục `starter-repo/`, **bật hiện file ẩn** (Mac Finder: `Cmd + Shift + .` · Windows: View → Show → Hidden items) để thấy `.gitignore`, `.env.example`.
-3. Trên repo vừa tạo: **Add file → Upload files** → **kéo thả** tất cả file và thư mục bên trong `starter-repo/` → **Commit changes**. Kéo thả mới giữ được thư mục con; lỗi vì nhiều file quá thì tải từng thư mục.
-4. Kiểm: có `.gitignore` chưa (hay thiếu nhất). Thiếu thì **Add file → Create new file**, tên `.gitignore`, dán nội dung từ máy.
-5. Từ giờ sửa file ngay trên web (biểu tượng bút chì → Commit). Phần code vẫn cần **một** người chạy được trên máy: trước mỗi lượt chạy tải **Code → Download ZIP** về thư mục mới (mang `.env` sang), chạy xong chỉ upload file kết quả và file vừa sửa; trong lúc đang chạy không ai sửa `eval/benchmark.csv` trên web.
-
-**(b) Dùng git**
-```bash
-git clone https://github.com/<tai-khoan>/K5-Day15-L3A-TenNhom.git
-cd K5-Day15-L3A-TenNhom
-cp -R ../duong-dan-toi/starter-repo/. .      # Windows PowerShell: Copy-Item -Recurse -Force ..\duong-dan-toi\starter-repo\* .
-git status                                   # không được có .env, data-btc/
-git add -A && git commit -m "Khung repo từ starter-repo" && git push
-```
-
-**Xong khi:** mở link repo bằng **cửa sổ ẩn danh** thấy được file (link nộp CP1) · đã mời thành viên (Settings → Collaborators) · đã điền `TEAMS.md` và `python run.py check` không báo gì ở phần "Kiểm TEAMS.md".
 
 ---
 
@@ -72,6 +45,30 @@ Gõ `dir` (Windows) hoặc `ls` (macOS / Linux): thấy `run.py` và `README.md`
 
 Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay `py` thì gõ thay.
 
+## Giao diện web (bản demo)
+
+Một trang gom cả lõi + 3 feature, 2 tab:
+
+- **Hỏi bài:** hỏi 1 câu → sơ đồ hàm của CP → khái niệm ↔ `file : hàm` kèm mã slide → "Giải thích lại cho người mới" (Feynman, F3)
+- **Lớp kẹt ở đâu** (F2, cho người ra đề / mentor): số gộp từ data preclass BTC (Day × khái niệm, số người sai lần đầu ở bài ôn) + từ câu hỏi ẩn danh trên app. < 5 người → "chưa đủ dữ liệu", không có trang xem từng người
+
+1. Điền `.env` (copy từ `.env.example`):
+    - `MODEL_PROVIDER=openai` · `MODEL_NAME=gpt-5-mini` · `API_KEY=<khoá OpenAI>`
+    - `LABS_DIR=<thư mục chứa các repo lab DayNN>` (repo lab của khoá không commit vào đây)
+2. Chạy:
+    ```
+    python codebase/web.py            # tự mở http://127.0.0.1:8000
+    python codebase/web.py --port 8080 --no-open
+    ```
+3. Thử: bấm chip "Day13 CP1: công thức chi phí" (gọi model thật, ~20–60 giây) → bấm "Giải thích lại cho người mới" trên 1 card → bấm chip "Thử nhờ làm hộ" để thấy bị từ chối.
+    - mở thẳng 1 câu: `http://127.0.0.1:8000/?q=Lab Day13, CP1. Công thức chi phí trong bài giảng được viết thành những hàm nào?`
+    - mở thẳng tab heatmap: `http://127.0.0.1:8000/?tab=heat` (cần `data-btc/preclass/answers.csv` trên máy, không commit)
+
+- Chân trang hiện model · token vào / ra · thời gian: bằng chứng gọi AI thật. Bật `CACHE=1` thì không gọi model (token = 0), **quay demo / video thì để `CACHE` trống**.
+- Chạy web thì bật log ẩn danh cho heatmap (`HEATMAP_LOG=1`: chỉ ghi lab, CP, tên khái niệm; không ghi câu hỏi, không ghi người). Tắt: `--no-log`.
+- Chỉ chạy local (`127.0.0.1`), không deploy: lõi đọc repo lab + slide của khoá, đưa lên server công khai là public tài liệu khoá + code học viên, kèm khoá API ai cũng gọi được.
+- Chỉ thư viện chuẩn Python (`http.server`), không cần `pip install`. Code: `codebase/web.py` (API) + `codebase/web/index.html` (giao diện, theme jade).
+
 ## Lệnh
 
 | Lệnh | Làm gì |
@@ -85,6 +82,12 @@ Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay
 | `python run.py simulate --try` | Thử mô phỏng chi phí 10 phiên (làm trước CP3) → `cost/simulate-try.csv` |
 | `python run.py simulate` | Mô phỏng chi phí khi dùng thật theo `cost/personas.yaml` (≥50 phiên) → `cost/simulate-N.csv` + `cost/simulate-N-summary.md` |
 | `python run.py simulate --rate-from eval/run-2.csv` | Như trên, lấy tỉ lệ đạt từ đúng lượt chỉ định. Không ghi thì khung lấy lượt `run-N` mới nhất đã chấm, cùng model, và ghi rõ đã lấy lượt nào trong bản tóm tắt |
+| `python codebase/web.py` | **Giao diện web** gom lõi + F1 + F2 + F3 (mục "Giao diện web" ở trên) |
+| `python codebase/f1_lo_trinh.py Day13` | F1: chạy lõi cho mọi CP của 1 lab → trang lộ trình + sơ đồ `data/f1/Day13.html` (nên bật `CACHE=1`). Mẫu đã chạy: [data/f1/Day13.html](data/f1/Day13.html) |
+| `python codebase/f2_preclass.py` | F2 nguồn data preclass BTC: top khái niệm lớp kẹt nhất mỗi Day (số người sai lần đầu ở bài ôn, số gộp) |
+| `python codebase/f2_heatmap.py --lab Day13` | F2: bảng "khái niệm / CP nào lớp kẹt nhất" từ log ẩn danh (`HEATMAP_LOG=1` mới ghi log; < 5 lượt → "chưa đủ dữ liệu") |
+| `python codebase/feynman.py "Lab Day13, CP1. ..."` | F3: phiên Feynman trên terminal (người mới hỏi, học viên giải thích lại, chấm 3 mức) |
+| `python -m pytest tests/` | Test lõi + F1 + F2 + F3 + web (lõi chạy AI giả, không tốn token). pytest không có trong `requirements.txt`, cài riêng |
 
 Gói miễn phí báo hết lượt: thêm `--wait 4` sau `eval` hoặc `simulate` (nghỉ 4 giây giữa hai lượt gọi). Sửa CSV bằng Excel: *File → Save As → CSV UTF-8*; Google Sheets: *Tệp → Tải xuống → CSV*.
 
@@ -108,14 +111,23 @@ Nhóm dùng stack khác (Node, Streamlit, notebook…): sửa hàm `run_app()` t
 
 | Thành phần | Thật / Giả | Ghi chú |
 |---|---|---|
-| Lời gọi AI ở quyết định trung tâm | **Thật** (bắt buộc từ CP3) | Model: ____ |
-|  |  |  |
+| Lời gọi AI ở quyết định trung tâm (bước 5: ghép khái niệm ↔ file / hàm) | **Giả** tới CP2 · **Thật** từ CP3 | CP2 chạy chế độ giả (ghép dự phòng theo tên hàm). CP3 nối `codebase/ai.py`, model: `gpt-5-mini` (OpenAI, `MODEL_PROVIDER=openai`); `run-1` chạy `openai/gpt-5-mini` qua OpenRouter |
+| Đọc repo lab, CP, file khung (`tools.py`) | **Thật** | Đọc repo lab thật của khoá trong `LABS_DIR`. Chỉ đưa model các hàm mà `# TODO CPn` chỉ tới (PR #21) |
+| Gói kiến thức slide (`data/knowledge/`) | **Thật, nhóm tự viết** | Bản tóm tắt nhóm tự viết theo mã `DayNN-s<trang>`, không phải slide gốc. Mới có Day13 (3 trang) → lab khác ra `khong_co_can_cu` |
+| Kiểm hàm / mã slide có thật, ép nhãn file khung (bước 6) | **Thật** | Kiểm bằng code, không qua model |
+| F1 lộ trình + sơ đồ (`f1_lo_trinh.py`) | **Thật, không gọi AI** | Dựng từ output lõi + đọc code lab bằng `ast` (hàm gọi hàm, file import file) |
+| F2 heatmap từ app (`f2_heatmap.py`) | **Thật, chưa có dữ liệu** | Đếm từ log ẩn danh (bật khi chạy web); mới đếm lượt hỏi, chưa đếm người → < 5 lượt hiện "chưa đủ dữ liệu", không giả số |
+| F2 heatmap từ preclass (`f2_preclass.py`) | **Thật, data BTC** | Số gộp từ `data-btc/preclass/answers.csv` (không commit); vd Day06 41/93 lượt sai lần đầu ở bài ôn |
+| F3 Feynman (`feynman.py`) | **Thật** | Mức 1 gọi model chấm, chỉ đối chiếu đoạn slide; mức 2–3 chấm bằng code. Kịch bản mức 3 mới có Day13 |
+| Giao diện web (`web.py`, `web/index.html`) | **Thật, chạy local** | Không deploy (lý do ở mục "Giao diện web") |
 
 ## Dùng AI vào việc gì
 
 2–3 dòng (bắt buộc): nhóm dùng công cụ AI nào để làm gì, người kiểm lại phần nào. Chi tiết: [docs/ai-usage.md](docs/ai-usage.md). Coding agent đọc [AGENTS.md](AGENTS.md).
 
-____
+- **Claude Code (Claude Opus):** Khuê dùng để viết lõi `codebase/`, F1, giao diện web (`codebase/web.py`, `web/index.html`) + test, `spec.md` §0–§2, §4, canvas, script đào data preclass, review PR. Người kiểm: ____
+- **Claude Code (Claude Sonnet):** Khánh dùng để viết câu thử B06–B18 và `eval/grade_metrics.py`. Người kiểm: ____
+- Phong, Đức Anh: ____
 
 ## File mẫu — điền ở bước nào
 
