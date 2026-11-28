@@ -128,7 +128,8 @@ Nhóm dùng stack khác (Node, Streamlit, notebook…): sửa hàm `run_app()` t
 
 - **Claude Code (Claude Opus):** Khuê dùng để viết lõi `codebase/`, F1, giao diện web (`codebase/web.py`, `web/index.html`) + test, `spec.md` §0–§2, §4, canvas, script đào data preclass, review PR. Người kiểm: ____
 - **Claude Code (Claude Sonnet):** Khánh dùng để viết câu thử B06–B18 và `eval/grade_metrics.py`. Người kiểm: ____
-- Phong, Đức Anh: ____
+- **Claude Code (Claude Opus):** Phong dùng để viết F3 `codebase/feynman.py` + test, `data/DATA_CARD.md`, tóm tắt slide Day13, điền slide trang 3–8. Người kiểm: Phong đối chiếu số trên slide với `eval/run-*.csv`, trace và PDF slide gốc; Khuê duyệt và merge PR #8, #17, #29
+- Đức Anh: ____
 
 ## File mẫu — điền ở bước nào
 
