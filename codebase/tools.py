@@ -153,7 +153,56 @@ def doc_cp(repo: str, cp: str) -> dict:
             py_files += _files_in_scope(repo, ref)
         elif ref.endswith(".py") and os.path.isfile(path):
             py_files.append(ref)
-    return {"mo_ta": mo_ta[:3000], "ham": _list_functions(repo, py_files), "todo": _todo_lines(repo, py_files, cp)}
+    todo = _todo_lines(repo, py_files, cp)
+    return {"mo_ta": mo_ta[:3000], "ham": _loc_ham_theo_todo(repo, _list_functions(repo, py_files), todo, cp),
+            "todo": todo}
+
+
+SO_HAM = re.compile(r"\b(\d+|một|hai|ba|bốn|năm|sáu)\s+hàm", re.IGNORECASE)
+SO_CHU = {"một": 1, "hai": 2, "ba": 3, "bốn": 4, "năm": 5, "sáu": 6}
+
+
+def _loc_ham_theo_todo(repo: str, ham: list, todo: list, cp: str) -> list:
+    """Giữ hàm mà TODO của đúng CP chỉ tới, để 1 file chứa nhiều CP không đưa model hàm của CP khác.
+
+    Hàm được giữ khi: chứa dòng TODO của CP · được TODO nhắc tên · hoặc là N hàm ngay sau một dòng TODO
+    ở cấp module ("viết ba hàm dưới đây" → 3 hàm; không ghi số → 1 hàm). Chỉ xét dòng comment `# TODO` ghi đúng CP;
+    không có TODO nào như vậy, hoặc lọc ra rỗng → trả nguyên danh sách (giữ cách cũ).
+
+    Args:
+        repo: Đường dẫn repo lab.
+        ham: Kết quả _list_functions: [{"file", "ham", "dong"}].
+        todo: Kết quả _todo_lines của CP.
+        cp: Mã CP, vd "CP1".
+
+    Returns:
+        Danh sách con của `ham`, giữ thứ tự cũ.
+    """
+    num = re.sub(r"\D", "", cp)
+    if not num:
+        return ham
+    this_cp = re.compile(rf"\bCP\s?{num}(?!\d)", re.IGNORECASE)
+    # chỉ dòng comment: docstring kiểu "đánh dấu TODO CP1…CP4" không chỉ tới hàm nào
+    todo = [t for t in todo if t["text"].startswith("#") and this_cp.search(t["text"])]
+    if not todo:
+        return ham
+    giu = set()
+    for rel in {t["file"] for t in todo}:
+        try:
+            tree = ast.parse(_read(os.path.join(repo, rel)))
+        except SyntaxError:
+            continue
+        defs = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        for t in (t for t in todo if t["file"] == rel):
+            ben_trong = [d for d in defs if d.lineno <= t["dong"] <= (d.end_lineno or d.lineno)]
+            giu |= {(rel, d.name) for d in ben_trong}
+            giu |= {(rel, d.name) for d in defs if re.search(rf"\b{re.escape(d.name)}\b", t["text"])}
+            if not ben_trong:  # TODO ở cấp module → lấy N hàm ngay sau nó
+                m = SO_HAM.search(t["text"])
+                n = (int(m.group(1)) if m.group(1).isdigit() else SO_CHU[m.group(1).lower()]) if m else 1
+                giu |= {(rel, d.name) for d in [d for d in defs if d.lineno > t["dong"]][:n]}
+    loc = [h for h in ham if (h["file"], h["ham"]) in giu or h["file"] not in {t["file"] for t in todo}]
+    return loc or ham
 
 
 def _files_in_scope(repo: str, folder: str) -> list:

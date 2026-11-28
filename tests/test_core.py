@@ -302,3 +302,41 @@ def test_doi_cau_hoi_tung_ban_hoac_xep_hang_thi_tu_choi(labs):
                  "Lab Day99, CP1. Xếp hạng ai đang kẹt nhiều nhất."):
         out = ask(text)
         assert "tu_choi" in out and "khai_niem" not in out
+
+
+def _ten_ham(info):
+    return [h["ham"] for h in info["ham"]]
+
+
+def test_doc_cp_chi_lay_ham_ma_todo_cua_cp_chi_toi(labs):
+    """1 file chứa hàm của nhiều CP: "viết ba hàm dưới đây" → đúng 3 hàm sau TODO + hàm được TODO nhắc tên;
+    hàm của CP sau (không có TODO CP1) bị bỏ, không đưa cho model."""
+    _write(labs / "app" / "rate_limiter.py",
+           "# TODO CP1: viết ba hàm dưới đây cho tới khi kiem_tra() in ĐẠT.\n"
+           "def a():\n    pass\n\ndef b():\n    pass\n\ndef c():\n    pass\n\n"
+           "def kiem_tra():\n    pass\n\n"
+           "# TODO CP1: viết tong; CP2 gọi lại hàm này.\ndef tong():\n    pass\n\n"
+           "def power_hai_ti_le():\n    pass\n")
+    assert _ten_ham(tools.doc_cp(str(labs), "CP1")) == ["a", "b", "c", "kiem_tra", "tong"]
+
+
+def test_doc_cp_todo_nam_trong_than_ham(labs):
+    """TODO nằm trong thân hàm → giữ đúng hàm chứa nó."""
+    _write(labs / "app" / "rate_limiter.py",
+           "def check_rate_limit(key):\n    # TODO CP1: điền logic\n    pass\n\ndef helper():\n    pass\n")
+    assert _ten_ham(tools.doc_cp(str(labs), "CP1")) == ["check_rate_limit"]
+
+
+def test_doc_cp_khong_co_todo_cua_cp_thi_giu_het(labs):
+    """Không có TODO ghi đúng CP → giữ mọi hàm như cũ (không lọc nhầm thành rỗng)."""
+    _write(labs / "app" / "rate_limiter.py", "def check_rate_limit(key):\n    pass\n\ndef helper():\n    pass\n")
+    assert _ten_ham(tools.doc_cp(str(labs), "CP1")) == ["check_rate_limit", "helper"]
+
+
+def test_doc_cp_bo_qua_todo_trong_docstring(labs):
+    """Docstring "đánh dấu TODO CP1…CP4" không phải TODO thật → CP4 không bị gán nhầm hàm đầu file."""
+    _write(labs / "CHECKPOINTS.md", "# Checkpoints\n## CP1 — Rate limit\n- `app/`\n## CP4 — Báo cáo\n- `app/`\n")
+    _write(labs / "app" / "rate_limiter.py",
+           '"""Lab.\nĐiền các chỗ đánh dấu TODO CP1…CP4.\n"""\n'
+           "# TODO CP1: viết hàm dưới đây\ndef a():\n    pass\n\ndef b():\n    pass\n")
+    assert _ten_ham(tools.doc_cp(str(labs), "CP4")) == ["a", "b"]
