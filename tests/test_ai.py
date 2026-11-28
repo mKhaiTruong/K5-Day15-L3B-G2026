@@ -28,7 +28,7 @@ def openai_mode(monkeypatch):
     monkeypatch.setattr(ai, "API_KEY", "sk-test")
     sent = {}
 
-    def fake_post(url, headers, body, timeout=60):
+    def fake_post(url, headers, body, timeout=120):
         sent.update(url=url, headers=headers, body=body)
         return sent.get("response", _fake_response('{"khai_niem": []}'))
 
@@ -69,6 +69,19 @@ def test_post_json_http_loi_thanh_runtime_error(monkeypatch):
     monkeypatch.setattr(ai.urllib.request, "urlopen", raise_http)
     with pytest.raises(RuntimeError, match="HTTP 401"):
         ai.post_json(ai.URL_OPENAI, {}, {"x": 1})
+
+
+def test_post_json_timeout_mac_dinh_120_giay(monkeypatch):
+    """Câu dài (B11 run-1) từng quá 60s → mặc định chờ 120s mới bỏ."""
+    seen = {}
+
+    def fake_urlopen(req, timeout):
+        seen["timeout"] = timeout
+        return io.BytesIO(b"{}")
+
+    monkeypatch.setattr(ai.urllib.request, "urlopen", fake_urlopen)
+    ai.post_json(ai.URL_OPENAI, {}, {})
+    assert seen["timeout"] == 120
 
 
 def test_post_json_doc_phan_hoi(monkeypatch):

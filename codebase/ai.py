@@ -49,7 +49,7 @@ MODEL_NAME = (os.environ.get("MODEL_NAME") or "").strip()
 API_KEY = (os.environ.get("API_KEY") or "").strip()
 
 
-def post_json(url: str, headers: dict, body: dict, timeout: int = 60) -> dict:
+def post_json(url: str, headers: dict, body: dict, timeout: int = 120) -> dict:
     """Gửi POST JSON và trả về JSON phản hồi, chỉ dùng thư viện chuẩn.
 
     Raises:
