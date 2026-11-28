@@ -1,0 +1,20 @@
+[
+  {
+    "id": "s14-chay-lai-k3",
+    "slide": "Day13-s14",
+    "nguon": "Số liệu đã chạy sẵn trên slide Day13 tr.14 (bảng tối đa 1 / 2 / 3 lần). Không chạy code lab.",
+    "hoi": "Mỗi lần chạy đúng với xác suất p = 0,8. Nếu nâng giới hạn chạy lại từ tối đa 2 lần lên tối đa 3 lần, thì chi phí mỗi việc thành công (tính bằng số lần giá một lần chạy) sẽ thế nào?",
+    "lua_chon": {"A": "Tăng", "B": "Giảm", "C": "Không đổi"},
+    "dung": "C",
+    "giai_thich": "Số lần chạy trung bình tăng từ 1,20 lên 1,24, nhưng tỉ lệ thành công cũng tăng từ 96% lên 99,2%. Chia ra vẫn là 1 ÷ p = 1,25 lần giá một lần chạy."
+  },
+  {
+    "id": "s17-do-nhay-xem-lai",
+    "slide": "Day13-s17",
+    "nguon": "Số liệu đã chạy sẵn trên slide Day13 tr.17 (bảng độ nhạy). Không chạy code lab.",
+    "hoi": "Giữ mọi yếu tố như tháng 10 (3.771 đ mỗi việc thành công). Đổi yếu tố nào sau đây làm chi phí mỗi việc thành công tăng nhiều nhất?",
+    "lua_chon": {"A": "Giá token và tool: 100 → 400 đ", "B": "Tỉ lệ cần xem lại: 5% → 30%", "C": "Tỉ lệ chạy lại: 10% → 40%"},
+    "dung": "B",
+    "giai_thich": "Tỉ lệ cần xem lại đẩy chi phí từ 2.343 lên 5.914 đ. Giá token và tool chỉ đổi 3.600 → 4.114 đ, tỉ lệ chạy lại chỉ 3.743 → 3.829 đ."
+  }
+]
