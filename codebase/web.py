@@ -10,10 +10,11 @@ API (JSON):
     POST /api/hoi             {"text"}                 → bản đồ lõi + lộ trình + sơ đồ + badge + thống kê model
     POST /api/feynman/bat-dau {"ban_do", "khai_niem"?} → {"phien", "cau": [...]} (không lộ đáp án M3)
     POST /api/feynman/cham    {"phien", "i", "tra_loi"} → {"dat", "nhan_xet", "cau_hoi_tiep", "tro_lai"}
-    GET  /                    → codebase/web/index.html
+    GET  /                    → codebase/web/index.html  ·  GET /<tên>.svg → ảnh trong codebase/web/
 """
 import json
 import os
+import re
 import sys
 import threading
 import uuid
@@ -159,6 +160,10 @@ def tao_handler(app: App):
                         return self._gui(200, fh.read(), "text/html; charset=utf-8")
                 except OSError:
                     return self._gui(200, "<p>Chưa có codebase/web/index.html.</p>".encode(), "text/html; charset=utf-8")
+            ten = self.path.split("?")[0].lstrip("/")
+            if re.fullmatch(r"[\w-]+\.svg", ten) and os.path.isfile(os.path.join(HERE, "web", ten)):
+                with open(os.path.join(HERE, "web", ten), "rb") as fh:  # chỉ .svg nằm ngay trong codebase/web/
+                    return self._gui(200, fh.read(), "image/svg+xml")
             self._json(404, {"loi": "không có trang này"})
 
         def do_POST(self):

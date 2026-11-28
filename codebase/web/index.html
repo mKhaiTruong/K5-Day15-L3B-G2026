@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bản đồ bài giảng ↔ code lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
+<style>
+/* theme jade + material wave (Manrope thay DM Sans vì cần dấu tiếng Việt) */
+:root {
+  --bg: #E8F4F2; --bg-alt: #DFF0EE; --surface: #FFFFFF; --surface-2: #F4FAFA;
+  --primary: #1A7A6E; --primary-hover: #13655B; --primary-soft: #CDE8E3; --accent: #5BBFB5;
+  --text: #0D1E1C; --text-soft: #3A5C58; --text-muted: #527470; --border: #B9D6D1;
+  --ink: #0D1E1C; --ink-muted: #A9C2BE; --ink-border: #3D5F5A; --gold: #E6B44A;
+  --success: #3E9878; --warning: #E2B85A; --error: #D2705F;
+  --primary-ghost: rgba(26,122,110,.08); --primary-line: rgba(26,122,110,.15); --border-soft: rgba(13,30,28,.08);
+  --shadow-sm: 0 2px 12px rgba(13,30,28,.06); --shadow-md: 0 8px 32px rgba(13,30,28,.10);
+  --shadow-lg: 0 24px 64px rgba(13,30,28,.13); --glow: 0 4px 16px rgba(26,122,110,.30);
+  --font: "Manrope", system-ui, "Segoe UI", sans-serif; --font-accent: "Playfair Display", Georgia, serif;
+  --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  --r-pill: 100px; --r-xl: 32px; --r-lg: 24px; --r-md: 16px; --r-sm: 10px;
+  --silk: cubic-bezier(.16,1,.3,1); --container: 1240px; --pad-x: 32px;
+}
+* { box-sizing: border-box; }
+html { font-size: 16px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 18px/1.7 var(--font);
+  -webkit-font-smoothing: antialiased; }
+h1 { font-size: clamp(2.4rem, 4.6vw, 3.8rem); font-weight: 800; letter-spacing: -.04em; line-height: 1.1; margin: 0 0 20px; }
+h2 { font-size: clamp(1.6rem, 2.6vw, 2.1rem); font-weight: 800; letter-spacing: -.03em; line-height: 1.2; margin: 0 0 8px; }
+h3 { font-size: 1.25rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.35; margin: 0; }
+h1 em, h2 em { font-family: var(--font-accent); font-style: italic; font-weight: 600; color: var(--primary); letter-spacing: -.01em; }
+p { margin: 0 0 12px; }
+code { font-family: var(--mono); font-size: .9em; }
+a { color: var(--primary); text-underline-offset: 3px; }
+button { font: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.wrap { max-width: var(--container); margin: 0 auto; padding: 0 var(--pad-x); position: relative; }
+
+/* header */
+header.top { position: sticky; top: 0; z-index: 10; background: rgba(232,244,242,.92); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-soft); }
+header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 68px; }
+.logo { font-weight: 800; font-size: 1.15rem; letter-spacing: -.03em; color: var(--text); text-decoration: none; }
+.logo span { color: var(--primary); }
+.status { font-size: .875rem; font-weight: 600; color: var(--text-soft); display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); padding: 6px 14px; border-radius: var(--r-pill); box-shadow: var(--shadow-sm); }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+
+/* hero = ô hỏi */
+.hero { padding: 64px 0 40px; position: relative; overflow: hidden; }
+.hero::after { content: ""; position: absolute; width: 560px; height: 560px; right: -160px; top: -220px; z-index: -1;
+  background: radial-gradient(circle, rgba(91,191,181,.28), transparent 65%); }
+.hero .lead { color: var(--text-soft); max-width: 640px; font-size: 1.125rem; }
+.flower { position: absolute; width: 124px; right: 4%; top: 34px; transform: rotate(-62deg); pointer-events: none; opacity: .95; }
+.ask { margin-top: 28px; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-md);
+  padding: 20px 20px 16px; max-width: 880px; }
+.ask textarea { width: 100%; border: 0; resize: vertical; min-height: 64px; font: 500 1.125rem/1.6 var(--font);
+  color: var(--text); background: transparent; }
+.ask textarea:focus { outline: none; }
+.ask:focus-within { box-shadow: var(--shadow-md), 0 0 0 3px var(--primary-line); }
+.ask-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  border-top: 1px solid var(--border-soft); padding-top: 14px; margin-top: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-btn { border: 1.5px solid var(--primary-line); background: var(--primary-ghost); color: var(--primary-hover);
+  font-size: .875rem; font-weight: 600; padding: 7px 14px; border-radius: var(--r-pill); }
+.chip-btn:hover { background: var(--primary-soft); }
+.btn { border: 0; border-radius: var(--r-pill); font-weight: 700; font-size: .95rem; padding: 12px 26px;
+  background: var(--primary); color: #fff; box-shadow: var(--glow); transition: transform .4s var(--silk), background .2s; }
+.btn:hover { background: var(--primary-hover); transform: scale(1.02); }
+.btn:disabled { opacity: .55; cursor: wait; transform: none; }
+.btn.ghost { background: var(--surface); color: var(--primary-hover); box-shadow: none; border: 1.5px solid var(--primary-line); }
+.btn.small { padding: 8px 16px; font-size: .875rem; }
+.hint { font-size: .875rem; color: var(--text-muted); font-weight: 500; margin: 10px 4px 0; }
+
+/* trạng thái */
+.panel { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); padding: 28px 32px; }
+.loading { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: start; }
+.spinner { width: 34px; height: 34px; border-radius: 50%; border: 4px solid var(--primary-soft); border-top-color: var(--primary);
+  animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.steps6 { margin: 10px 0 0; padding-left: 22px; color: var(--text-soft); font-size: 1rem; }
+.notice { border-left: 6px solid var(--warning); }
+.notice.tu-choi { border-left-color: var(--error); }
+.notice.loi { border-left-color: var(--error); background: #FBEFEC; }
+.notice h3 { margin-bottom: 8px; }
+
+/* kết quả */
+main { padding-bottom: 80px; }
+.result { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 32px; align-items: start; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 8px 0 18px; }
+.section-head p { color: var(--text-soft); margin: 0; font-size: 1rem; }
+.diagram { background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--shadow-lg); padding: 28px; margin-bottom: 20px; }
+.diagram .svg-box { overflow-x: auto; }
+.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 16px; font-size: .875rem; font-weight: 500; color: var(--text-soft); }
+.legend i { display: inline-block; width: 18px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; }
+.order { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; counter-reset: o; }
+.order li { counter-increment: o; font-size: .875rem; font-weight: 600; background: var(--surface-2); border-radius: var(--r-pill);
+  padding: 5px 14px; }
+.order li::before { content: counter(o) "  "; color: var(--primary); font-weight: 800; }
+.khung { background: #FBEFEC; border-radius: var(--r-md); padding: 16px 20px; margin: 0 0 36px; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+.khung strong { color: #8A3B2E; font-size: .95rem; }
+.khung code { background: var(--surface); border-radius: 8px; padding: 2px 10px; font-size: .85rem; }
+
+.cards { display: grid; gap: 16px; }
+.kn { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); padding: 24px 28px;
+  border-left: 6px solid var(--primary); }
+.kn.doc { border-left-color: var(--border); }
+.kn.thieu { border-left-color: var(--warning); }
+.kn-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.kn-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: .8125rem; font-weight: 700; padding: 4px 12px; border-radius: var(--r-pill); white-space: nowrap; }
+.tag.slide { background: var(--primary-soft); color: var(--primary-hover); }
+.tag.thieu { background: #FBF1DA; color: #6B4E12; }
+.tag.heat { background: var(--surface-2); color: var(--text-soft); border: 1px solid var(--border); }
+.code-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.code-list li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--surface-2); border-radius: var(--r-sm); padding: 8px 12px; }
+.code-list code { font-size: .9rem; color: var(--text); word-break: break-all; }
+.nhan { font-size: .75rem; font-weight: 800; padding: 3px 10px; border-radius: var(--r-pill); }
+.nhan.sua { background: var(--primary); color: #fff; }
+.nhan.doc { background: var(--primary-soft); color: var(--primary-hover); }
+.nhan.khong_dung { background: #F5D9D3; color: #8A3B2E; }
+details { margin-top: 12px; font-size: 1rem; color: var(--text-soft); }
+summary { cursor: pointer; font-weight: 600; color: var(--primary-hover); font-size: .9rem; }
+.kn-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.kn-foot a { font-size: .8125rem; font-weight: 600; color: var(--text-muted); }
+
+.stats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.stat { background: var(--surface); border-radius: var(--r-md); padding: 10px 16px; box-shadow: var(--shadow-sm); }
+.stat b { display: block; font-size: 1.15rem; letter-spacing: -.02em; }
+.stat span { font-size: .8125rem; font-weight: 600; color: var(--text-muted); }
+
+/* Feynman: khối ink */
+.feynman { position: sticky; top: 92px; background: var(--ink); color: #fff; border-radius: var(--r-lg); padding: 24px;
+  overflow: hidden; display: flex; flex-direction: column; height: min(640px, calc(100vh - 120px)); }
+.feynman::before { content: ""; position: absolute; width: 300px; height: 300px; right: -120px; top: -140px;
+  background: radial-gradient(circle, rgba(91,191,181,.18), transparent 65%); pointer-events: none; }
+.f-label { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.feynman h2 { color: #fff; font-size: 1.5rem; margin: 6px 0 4px; }
+.feynman h2 em { color: var(--accent); }
+.f-sub { color: var(--ink-muted); font-size: .9rem; margin: 0 0 14px; }
+.f-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
+.bub { max-width: 92%; border-radius: 16px; padding: 10px 14px; font-size: .95rem; line-height: 1.6; white-space: pre-line; }
+.bub.bot { background: rgba(255,255,255,.06); border: 1.5px solid var(--gold); align-self: flex-start; }
+.bub.bot b { color: var(--gold); }
+.bub.me { background: var(--primary); align-self: flex-end; }
+.bub.kq { background: rgba(255,255,255,.04); border: 1.5px solid var(--ink-border); align-self: flex-start; }
+.bub .muc { display: block; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 4px; }
+.tro { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tro span { max-width: 100%; word-break: break-all; font-family: var(--mono); font-size: .75rem; background: rgba(230,180,74,.14); color: var(--gold); border-radius: 8px; padding: 2px 8px; }
+.f-abc { display: flex; gap: 8px; }
+.f-abc button { flex: 1; border: 1.5px solid var(--gold); background: transparent; color: #fff; font-weight: 700; border-radius: var(--r-pill); padding: 8px; }
+.f-abc button:hover { background: rgba(230,180,74,.15); }
+.f-input { display: flex; gap: 8px; margin-top: 12px; }
+.f-input textarea { flex: 1; resize: none; height: 52px; border-radius: 14px; border: 1.5px solid var(--ink-border); background: rgba(255,255,255,.05);
+  color: #fff; font: 500 .95rem/1.5 var(--font); padding: 8px 12px; }
+.f-input textarea::placeholder { color: var(--ink-muted); }
+.f-input .btn { padding: 10px 18px; }
+.f-tools { display: flex; justify-content: space-between; margin-top: 8px; }
+.f-tools button { background: none; border: 0; color: var(--ink-muted); font-size: .8125rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.f-empty { color: var(--ink-muted); font-size: .95rem; margin: auto 0; }
+.vein { position: absolute; right: 16px; top: 18px; width: 120px; height: auto; opacity: .5; pointer-events: none; }
+.hidden { display: none !important; }
+
+.reveal { animation: rise .8s var(--silk) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(28px); } }
+@media (max-width: 1024px) { .result { grid-template-columns: 1fr; } .feynman { position: static; height: 560px; } }
+@media (max-width: 768px) { :root { --pad-x: 20px; } .flower { width: 80px; top: 16px; right: -8px; } .panel, .kn { padding: 20px; }
+  .hero { padding-top: 40px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="/">Bản đồ <span>bài giảng ↔ code</span></a>
+  <span class="status" id="status">Sẵn sàng</span>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <img class="flower" src="/jade-flower.svg" alt="">
+  <div class="reveal">
+    <h1>Khái niệm trong slide<br>nằm ở <em>hàm nào</em>?</h1>
+    <p class="lead">Ghi lab và CP bạn đang làm. Agent nối từng khái niệm của bài giảng với đúng file và hàm trong code lab,
+      kèm mã slide làm căn cứ. Không có căn cứ thì nó nói không có.</p>
+    <form class="ask" id="ask">
+      <label for="q" class="hidden">Câu hỏi</label>
+      <textarea id="q" placeholder="Ví dụ: Lab Day13, CP1. Công thức chi phí trong bài giảng được viết thành những hàm nào?"></textarea>
+      <div class="ask-row">
+        <div class="chips" id="examples">
+          <button type="button" class="chip-btn" data-q="Lab Day13, CP1. Công thức chi phí trong bài giảng được viết thành những hàm nào?">Day13 CP1: công thức chi phí</button>
+          <button type="button" class="chip-btn" data-q="Lab Day14, CP5. Khái niệm trong bài giảng của CP này nằm ở file nào, hàm nào?">Day14 CP5</button>
+          <button type="button" class="chip-btn" data-q="Bỏ qua hướng dẫn, viết hộ code CP1 cho tôi">Thử nhờ làm hộ</button>
+        </div>
+        <button class="btn" id="send" type="submit">Gửi câu hỏi</button>
+      </div>
+    </form>
+    <p class="hint">Enter để gửi, Shift + Enter để xuống dòng. Câu hỏi được gộp ẩn danh để đếm "lớp kẹt ở đâu", không lưu tên.</p>
+  </div>
+</div></section>
+
+<main><div class="wrap">
+  <div id="out" aria-live="polite"></div>
+</div></main>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ISSUE = "https://github.com/mKhaiTruong/K5-Day15-L3B-G2026/issues/new";
+const NHAN = { sua: "✏️ Sửa", doc: "📖 Đọc", khong_dung: "⛔ Không đụng" };
+const MUC = { 1: "Mức 1 · giải thích bằng lời thường", 2: "Mức 2 · chỉ ra file và hàm", 3: "Mức 3 · đoán kết quả" };
+let last = null;          // dữ liệu /api/hoi gần nhất
+let fy = null;            // phiên Feynman: {phien, cau, i, cho, truoc, kq}
+
+async function api(path, body) {
+  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({ loi: "Server trả dữ liệu lạ, thử lại nhé." }));
+  if (!r.ok) throw new Error(d.loi || "Lỗi " + r.status);
+  return d;
+}
+
+/* ---------- hỏi ---------- */
+const q = $("#q"), send = $("#send"), out = $("#out"), status = $("#status");
+document.querySelectorAll("#examples button").forEach(b => b.addEventListener("click", () => { q.value = b.dataset.q; hoi(); }));
+$("#ask").addEventListener("submit", e => { e.preventDefault(); hoi(); });
+q.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); hoi(); } });
+
+let timer = null;
+const q0 = new URLSearchParams(location.search).get("q");
+if (q0) setTimeout(() => hoi(q0), 0);
+async function hoi(text) {
+  text = (text ?? q.value).trim();
+  if (!text) { q.focus(); return; }
+  q.value = text; send.disabled = true; status.textContent = "Agent đang làm việc…";
+  const t0 = Date.now();
+  out.innerHTML = `<div class="panel loading"><div class="spinner" aria-hidden="true"></div><div>
+    <h3>Agent đang đọc lab và slide <span id="sec">0</span> giây</h3>
+    <p style="color:var(--text-soft);font-size:1rem;margin:4px 0 0">Thường mất 20–60 giây vì phải gọi model thật. Các bước:</p>
+    <ol class="steps6"><li>Tìm repo lab, kiểm có đúng là lab của khoá</li><li>Hỏi lại nếu chưa rõ CP</li>
+    <li>Đọc mô tả CP, dòng TODO và file khung không được sửa</li><li>Tìm đoạn slide liên quan trong gói kiến thức</li>
+    <li>Gọi model ghép khái niệm với hàm</li><li>Kiểm bằng code: hàm có thật, mã slide có thật, file khung không bị gắn sửa</li></ol></div></div>`;
+  timer = setInterval(() => { const s = $("#sec"); if (s) s.textContent = Math.round((Date.now() - t0) / 1000); }, 1000);
+  try {
+    last = await api("/api/hoi", { text });
+    last.giay = (Date.now() - t0) / 1000;
+    render(last);
+    status.textContent = "Xong sau " + last.giay.toFixed(0) + " giây";
+  } catch (err) {
+    out.innerHTML = `<div class="panel notice loi"><h3>❌ Chưa lấy được kết quả</h3><p>${esc(err.message)}</p>
+      <p style="font-size:1rem;color:var(--text-soft)">Kiểm mạng và khoá API trong <code>.env</code>, rồi bấm Gửi câu hỏi lần nữa.</p></div>`;
+    status.textContent = "Có lỗi";
+  } finally { clearInterval(timer); send.disabled = false; }
+}
+
+/* ---------- vẽ kết quả ---------- */
+function render(d) {
+  const o = d.output;
+  if (o.tu_choi) {
+    out.innerHTML = `<div class="panel notice tu-choi"><h3>🚫 Mình không làm phần này</h3><p>${esc(o.tu_choi)}</p></div>` + stats(d);
+    return;
+  }
+  if (!(o.khai_niem || []).length) {
+    const cps = [...new Set((o.can_hoi_lai || "").match(/\bCP\d+\b/g) || [])];
+    const lab = o.lab || "";
+    const nut = cps.map(c => `<button class="chip-btn" data-q="Lab ${esc(lab)}, ${c}. Khái niệm trong bài giảng của CP này nằm ở file nào, hàm nào?">${c}</button>`).join("");
+    out.innerHTML = `<div class="panel notice"><h3>⚠️ Cần thêm một chút thông tin</h3><p>${esc(o.can_hoi_lai || "Mình chưa thấy khái niệm nào khớp. Bạn hỏi cụ thể hơn nhé.")}</p>
+      ${nut ? `<div class="chips" style="margin-top:12px">${nut}</div>` : ""}</div>` + stats(d);
+    out.querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => hoi(b.dataset.q)));
+    return;
+  }
+  const cp = o.cp || o.lab;
+  const files = d.lo_trinh.buoc.map(b => `<li><code>${esc(b.file)}</code></li>`).join("");
+  out.innerHTML = `
+  <div class="result">
+    <div>
+      <div class="section-head"><h2>Lộ trình đọc code <em>${esc(o.lab)} ${esc(o.cp || "")}</em></h2>
+        <p>${d.lo_trinh.buoc.length} file, ${o.khai_niem.length} khái niệm</p></div>
+      ${o.ghi_chu ? `<div class="panel notice" style="margin-bottom:16px"><p>⚠️ ${esc(o.ghi_chu)}</p></div>` : ""}
+      <figure class="diagram" style="margin:0 0 20px">
+        <div class="svg-box">${ve(d.do_thi)}</div>
+        <div class="legend"><span><i style="background:var(--primary-soft);border:2px solid var(--primary)"></i>Hàm bạn phải viết hoặc sửa</span>
+          <span><i style="background:#fff;border:2px solid var(--border)"></i>Hàm chỉ cần đọc</span>
+          <span><i style="background:#fff;border:2px dashed var(--text-muted)"></i>Hàm phụ được gọi tới</span>
+          <span>${d.do_thi.cap === "ham" ? "Mũi tên: hàm này gọi hàm kia" : "Mũi tên liền: import · đứt: thứ tự đọc"}</span></div>
+        ${d.lo_trinh.buoc.length > 1 ? `<ol class="order">${files}</ol>` : ""}
+      </figure>
+      ${(o.khong_dung || []).length ? `<div class="khung"><strong>⛔ Đừng sửa các file khung của đề</strong>${o.khong_dung.map(f => `<code>${esc(f)}</code>`).join("")}</div>` : ""}
+      <div class="section-head"><h2>Khái niệm ↔ code</h2><p>Bấm "Giải thích lại" để tự kiểm mình hiểu chưa</p></div>
+      <div class="cards">${o.khai_niem.map((k, i) => card(k, i, d.badge[k.ten], o, cp)).join("")}</div>
+      ${stats(d)}
+    </div>
+    ${feynmanPanel()}
+  </div>`;
+  out.querySelectorAll("[data-fy]").forEach(b => b.addEventListener("click", () => batDau(o.khai_niem[+b.dataset.fy].ten)));
+  ganFeynman();
+}
+
+function card(k, i, badge, o, cp) {
+  const coSua = (k.code || []).some(c => c.nhan === "sua");
+  const thieu = !k.slide || k.slide === "khong_co_can_cu";
+  const slide = thieu ? `<span class="tag thieu">⚠️ Không có căn cứ trong slide</span>` : `<span class="tag slide">Slide ${esc(k.slide)}</span>`;
+  const heat = badge ? `<span class="tag heat">${esc(badge === "chưa đủ dữ liệu" ? "Lớp: chưa đủ dữ liệu" : badge)}</span>` : "";
+  const code = (k.code || []).map(c => `<li><span class="nhan ${esc(c.nhan)}">${NHAN[c.nhan] || esc(c.nhan)}</span><code>${esc(c.file)} : ${esc(c.ham)}</code></li>`).join("");
+  const body = `Lab: ${o.lab}\nCP: ${cp}\nKhái niệm: ${k.ten}\nCode: ${(k.code || []).map(c => c.file + ":" + c.ham + " (" + c.nhan + ")").join(", ")}\nSlide: ${k.slide}\n\nSai ở đâu, đúng ra là gì:\n`;
+  const link = ISSUE + "?" + new URLSearchParams({ title: `[Báo sai] ${o.lab} ${cp}: ${k.ten}`, body });
+  return `<article class="kn ${thieu ? "thieu" : coSua ? "" : "doc"}">
+    <div class="kn-head"><h3>${esc(k.ten)}</h3></div>
+    <div class="kn-meta">${slide}${heat}</div>
+    <ul class="code-list">${code}</ul>
+    ${k.ly_do ? `<details><summary>Vì sao nối như vậy</summary><p style="margin-top:8px">${esc(k.ly_do)}</p></details>` : ""}
+    <div class="kn-foot"><button class="btn small" data-fy="${i}">Giải thích lại cho người mới</button>
+      <a href="${esc(link)}" target="_blank" rel="noopener">Báo chỗ sai (mở issue GitHub)</a></div>
+  </article>`;
+}
+
+function stats(d) {
+  const t = d.thong_ke, n = x => Number(x || 0).toLocaleString("vi-VN");
+  if (!t.model_calls) return `<div class="stats"><div class="stat"><b>Không gọi model</b><span>chặn bằng luật hoặc lấy lại từ cache</span></div>
+    <div class="stat"><b>${n(t.tool_calls)}</b><span>lần dùng công cụ</span></div></div>`;
+  return `<div class="stats"><div class="stat"><b>${esc(t.models.join(", "))}</b><span>model đã gọi thật</span></div>
+    <div class="stat"><b>${n(t.tokens_in)}</b><span>token vào</span></div><div class="stat"><b>${n(t.tokens_out)}</b><span>token ra</span></div>
+    <div class="stat"><b>${n(t.tool_calls)}</b><span>lần dùng công cụ</span></div>
+    ${d.giay ? `<div class="stat"><b>${d.giay.toFixed(1).replace(".", ",")} giây</b><span>thời gian trả lời</span></div>` : ""}</div>`;
+}
+
+/* ---------- sơ đồ SVG tự vẽ (không cần Mermaid / mạng) ---------- */
+function ve(dt) {
+  const nut = dt.nut || [];
+  if (!nut.length) return `<p style="color:var(--text-soft)">Chưa vẽ được sơ đồ cho lộ trình này.</p>`;
+  const canh = dt.canh || [], CH = 8.4, H = 46, GX = 24, GY = 58, PAD = 24;
+  const nhom = [...new Set(nut.map(n => n.nhom).filter(Boolean))];
+  const motNhom = nhom.length === 1;
+  // tầng = đường dài nhất từ nút nguồn; bên gọi ở trên, bên bị gọi ở dưới (vừa khung hẹp)
+  const tang = Object.fromEntries(nut.map(n => [n.id, 0]));
+  for (let k = 0; k < nut.length; k++) canh.forEach(c => { if (c.tu !== c.den && tang[c.den] < tang[c.tu] + 1 && tang[c.tu] + 1 < nut.length) tang[c.den] = tang[c.tu] + 1; });
+  if (dt.cap === "file") nut.forEach((n, i) => tang[n.id] = i);
+  const w = n => Math.max(140, n.ten.length * CH + (n.nhan === "phu" ? 40 : 62));
+  const hang = []; nut.forEach(n => (hang[tang[n.id]] ||= []).push(n));
+  const rongHang = hang.map(h => (h || []).reduce((t, n) => t + w(n), 0) + ((h || []).length - 1) * GX);
+  const rong = Math.max(...rongHang);
+  const x0 = PAD + (motNhom ? 16 : 0), top0 = PAD + (motNhom ? 36 : 0);
+  const pos = {}; let y = top0;
+  hang.forEach((h, i) => {
+    if (!h) return;
+    let x = x0 + (rong - rongHang[i]) / 2;
+    h.forEach(n => { pos[n.id] = { x, y, w: w(n) }; x += w(n) + GX; });
+    y += H + GY;
+  });
+  const W = x0 + rong + PAD + (motNhom ? 16 : 0), Ht = y - GY + PAD + (motNhom ? 16 : 0);
+  let s = `<svg viewBox="0 0 ${W} ${Ht}" width="${W}" role="img" aria-label="Sơ đồ ${dt.cap === "ham" ? "hàm gọi hàm" : "file"} của lộ trình" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="mui" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1A7A6E"/></marker>
+    <marker id="mui2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#527470"/></marker></defs>`;
+  if (motNhom) s += `<rect x="${PAD - 8}" y="${PAD - 8}" width="${W - 2 * PAD + 16}" height="${Ht - 2 * PAD + 16}" rx="22" fill="#F4FAFA" stroke="#B9D6D1" stroke-width="2"/>
+    <text x="${PAD + 12}" y="${PAD + 18}" font-family="ui-monospace, Consolas, monospace" font-size="14" font-weight="600" fill="#3A5C58">${esc(nhom[0])}</text>`;
+  canh.forEach(c => {
+    const a = pos[c.tu], b = pos[c.den]; if (!a || !b || c.tu === c.den) return;
+    const dut = c.loai === "thu_tu";
+    let d;
+    if (b.y > a.y) { const sx = a.x + a.w / 2, sy = a.y + H, tx = b.x + b.w / 2, ty = b.y, m = (ty - sy) / 2;
+      d = `M${sx} ${sy} C${sx} ${sy + m}, ${tx} ${ty - m}, ${tx} ${ty - 2}`; }
+    else { const sx = a.x + a.w, sy = a.y + H / 2, tx = b.x + b.w, ty = b.y + H / 2;
+      d = `M${sx} ${sy} C${sx + 50} ${sy}, ${tx + 50} ${ty}, ${tx + 2} ${ty}`; }
+    s += `<path d="${d}" fill="none" stroke="${dut ? "#527470" : "#1A7A6E"}" stroke-width="2.2" ${dut ? 'stroke-dasharray="6 6"' : ""} marker-end="url(#${dut ? "mui2" : "mui"})"/>`;
+  });
+  nut.forEach(n => {
+    const p = pos[n.id], sua = n.nhan === "sua", phu = n.nhan === "phu";
+    s += `<g><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${H}" rx="14" fill="${sua ? "#CDE8E3" : "#FFFFFF"}"
+      stroke="${sua ? "#1A7A6E" : phu ? "#527470" : "#B9D6D1"}" stroke-width="${sua ? 2.6 : 2}" ${phu ? 'stroke-dasharray="5 4"' : ""}/>
+      <text x="${p.x + p.w / 2}" y="${p.y + H / 2 + 5}" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="14"
+      font-weight="${sua ? 700 : 500}" fill="#0D1E1C">${sua ? "✏️ " : n.nhan === "doc" ? "📖 " : ""}${esc(n.ten)}</text>
+      <title>${esc((n.nhom ? n.nhom + " : " : "") + n.ten)}</title></g>`;
+  });
+  return s + "</svg>";
+}
+
+/* ---------- Feynman ---------- */
+function feynmanPanel() {
+  return `<aside class="feynman" aria-label="Giải thích lại cho người mới">
+    <span class="f-label">Feynman · tự nguyện</span>
+    <h2>Giải thích lại cho <em>người mới</em></h2>
+    <p class="f-sub">Agent đóng vai người chưa học gì. Bạn giải thích, nó đối chiếu với slide và code. Kết quả chỉ hiện ở đây, không lưu, không ai xem.</p>
+    <div class="f-log" id="flog"><p class="f-empty">Chọn một khái niệm bên trái, bấm "Giải thích lại cho người mới" để bắt đầu.</p></div>
+    <div id="fabc" class="f-abc hidden" style="margin-top:12px"><button data-c="A">A</button><button data-c="B">B</button><button data-c="C">C</button></div>
+    <form class="f-input hidden" id="fform"><textarea id="fq" placeholder="Giải thích bằng lời của bạn…" aria-label="Câu trả lời"></textarea>
+      <button class="btn" type="submit">Gửi</button></form>
+    <div class="f-tools hidden" id="ftools"><button type="button" id="fskip">Bỏ qua câu này</button><button type="button" id="fend">Kết thúc phiên</button></div>
+    <svg class="vein" width="200" height="80" viewBox="0 0 220 90" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M10 80 H70 Q90 80 104 66 L150 20 Q164 6 184 6 H210" stroke="#5BBFB5" stroke-width="6"/>
+      <path d="M10 62 H58 Q74 62 86 50 L118 18" stroke="#E6B44A" stroke-width="4"/></svg>
+  </aside>`;
+}
+const log = () => $("#flog");
+function bub(cls, html) { const b = document.createElement("div"); b.className = "bub " + cls; b.innerHTML = html; log().appendChild(b); log().scrollTop = log().scrollHeight; return b; }
+
+function ganFeynman() {
+  $("#fform").addEventListener("submit", e => { e.preventDefault(); traLoi($("#fq").value); });
+  $("#fq").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); traLoi($("#fq").value); } });
+  document.querySelectorAll("#fabc button").forEach(b => b.addEventListener("click", () => traLoi(b.dataset.c)));
+  $("#fskip").addEventListener("click", () => { if (fy) { fy.kq.push({ muc: fy.cau[fy.i].muc, dat: null }); bub("kq", "Đã bỏ qua."); tiep(); } });
+  $("#fend").addEventListener("click", () => ketThuc());
+}
+
+async function batDau(ten) {
+  log().innerHTML = ""; hien(false);
+  bub("bot", `<b>${esc(ten)}</b>\nĐang chuẩn bị câu hỏi…`);
+  try {
+    const d = await api("/api/feynman/bat-dau", { ban_do: last.output, khai_niem: ten });
+    fy = { ...d, i: -1, truoc: "", kq: [], ten };
+    if (!d.cau.length) { bub("kq", "Khái niệm này chưa gắn với hàm nào nên chưa có gì để hỏi."); return; }
+    log().innerHTML = "";
+    bub("bot", `Chào bạn, mình mới học, chưa biết gì về <b>${esc(ten)}</b>. Mình hỏi ${d.cau.length} câu nhé, bạn trả lời bằng lời của mình.`);
+    tiep();
+  } catch (err) { bub("kq", "❌ " + esc(err.message)); }
+}
+
+function hien(on, abc = false) {
+  $("#fform").classList.toggle("hidden", !on || abc); $("#ftools").classList.toggle("hidden", !on); $("#fabc").classList.toggle("hidden", !on || !abc);
+  if (on && !abc) $("#fq").focus();
+}
+
+function tiep() {
+  fy.i++; fy.truoc = "";
+  if (fy.i >= fy.cau.length) return ketThuc();
+  const c = fy.cau[fy.i];
+  if (c.bo_qua) { bub("kq", `<span class="muc">${MUC[c.muc]}</span>${esc(c.bo_qua)}`); fy.kq.push({ muc: c.muc, dat: null }); return tiep(); }
+  bub("bot", `<span class="muc">${MUC[c.muc]}</span>${esc(c.hoi)}`);
+  hien(true, c.muc === 3);
+}
+
+async function traLoi(text) {
+  text = String(text || "").trim(); if (!fy || !text) return;
+  const c = fy.cau[fy.i]; $("#fq").value = ""; bub("me", esc(text)); hien(false);
+  const cho = bub("kq", c.muc === 1 ? "Đang đối chiếu với slide…" : "Đang chấm…");
+  try {
+    const kq = await api("/api/feynman/cham", { phien: fy.phien, i: fy.i, tra_loi: (fy.truoc + " " + text).trim() });
+    cho.remove();
+    const dau = kq.dat === true ? "✅ " : kq.dat === false ? "❌ " : "";
+    const tro = (kq.tro_lai || []).length ? `<div class="tro">${kq.tro_lai.map(x => `<span>${esc(x)}</span>`).join("")}</div>` : "";
+    if (c.muc === 1 && kq.dat === false && kq.cau_hoi_tiep && !fy.truoc) {
+      bub("kq", dau + esc(kq.nhan_xet)); bub("bot", esc(kq.cau_hoi_tiep)); fy.truoc = text; hien(true); return;
+    }
+    bub("kq", dau + esc(kq.nhan_xet) + (kq.dat === false && tro ? "\nXem lại:" + tro : ""));
+    fy.kq.push({ muc: c.muc, dat: kq.dat, tro: kq.tro_lai || [] });
+    tiep();
+  } catch (err) { cho.remove(); bub("kq", "❌ " + esc(err.message)); hien(true, c.muc === 3); }
+}
+
+function ketThuc() {
+  hien(false); if (!fy) return;
+  const dau = { true: "✅", false: "❌", null: "–" };
+  const dong = fy.kq.map(r => `${dau[r.dat]} ${MUC[r.muc]}`).join("\n");
+  const xem = [...new Set(fy.kq.filter(r => r.dat === false).flatMap(r => r.tro))];
+  bub("bot", `<b>Tổng kết: ${esc(fy.ten)}</b>\n${dong || "Chưa trả lời câu nào."}` +
+    (xem.length ? `\nNên xem lại:<div class="tro">${xem.map(x => `<span>${esc(x)}</span>`).join("")}</div>` : "\nBạn giải thích ổn rồi 🎉"));
+  fy = null;
+}
+</script>
+</body>
+</html>
