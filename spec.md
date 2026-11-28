@@ -175,12 +175,27 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 
 ## §9. Rủi ro & an toàn
 - Dữ liệu: đã ẩn danh gì, không thu gì, không đưa gì vào model gói miễn phí:
-- AI **không được** làm gì kể cả khi người dùng yêu cầu:
+    - log heatmap (`data/heatmap/cau_hoi.jsonl`, gitignored) chỉ ghi `lab`, `cp`, tên khái niệm — không ghi câu hỏi, không ghi người (`tools.ghi_cau_hoi_an_danh`); tắt khi chạy eval, bật khi chạy web (`--no-log` để tắt)
+    - khảo sát: đã loại phiếu của thành viên nhóm, xoá tên / email / dấu thời gian (`evidence/survey/results.csv`, mã `P01`–`P12`)
+    - data preclass BTC (`data-btc/`, gitignored, không commit): chỉ hiện số gộp; tab "Lớp kẹt ở đâu" không trả mã học viên (có test `test_khong_lo_ma_hoc_vien...`)
+    - gửi lên model: câu hỏi, mô tả CP, tên hàm + dòng `TODO`, tên file khung, đoạn slide **nhóm tự tóm tắt** — không gửi nguyên slide khoá, không gửi thông tin người học. Model gói trả phí (`gpt-5-mini` qua OpenAI / OpenRouter có nạp tiền), không dùng gói miễn phí
+    - repo của học viên (link GitHub công khai) tải về `data/repos/` (gitignored), chỉ đọc, không ghi gì lên GitHub
+- AI **không được** làm gì kể cả khi người dùng yêu cầu — chặn bằng code **trước khi** gọi model (0 token):
+    - viết hộ code CP, "bỏ qua hướng dẫn", lách script chấm (`ATTACK` trong `agent.py`; B05, B17)
+    - đưa câu hỏi của từng bạn / ai đang kẹt / xếp hạng (`PRIVATE`; B22)
+    - coi repo ngoài khoá là lab (B04, B18) · gắn nhãn sửa cho file khung (bước 6 ép `khong_dung`, model nói gì cũng không đổi được)
 - Ai có thể bị hại nếu AI sai, và nhóm chặn thế nào:
+    - **học viên sửa nhầm file khung** → hỏng test, mất điểm. Chặn: bước 6 ép `khong_dung`; câu đòi sửa file khung bị từ chối. Lượt 1 và 2: 0 câu gắn sửa file khung
+    - **học viên tin nhầm liên kết sai** (khái niệm ↔ hàm, trích slide có thật nhưng không khớp nội dung) → hiểu sai bài. Chặn một phần: bước 6 bỏ hàm / mã slide không có thật; chỉ đưa model hàm mà TODO của CP chỉ tới (PR #21); không có căn cứ thì ghi `khong_co_can_cu`; mỗi khái niệm có link "Báo chỗ sai". **Chưa chặn:** lẫn nhãn `sua` / `doc` (B09, B16, B19), slide có thật nhưng sai ý → vì vậy đề xuất ITERATE, chưa GO
+    - **học viên bị giám sát** → trái luật Track A. Chặn: heatmap chỉ số gộp, dưới 5 ghi "chưa đủ dữ liệu", không có trang xem từng người; kết quả Feynman chỉ hiện cho học viên, không lưu
 
 ## §10. Phân công & changelog
-- Phân công có tên (theo chặng, chia cặp — guide "Cách chia việc"): __
-- Dùng AI vào việc gì (2–3 dòng; chi tiết `docs/ai-usage.md`):
+- Phân công có tên (theo `TEAMS.md`, issue #9 cho CP3, issue #20 cho CP4):
+    - **Khuê** (đội trưởng): lõi `codebase/agent.py` + `tools.py` + AI thật, F1 lộ trình + sơ đồ, giao diện web, đọc repo học viên, §0–§6, §9, nộp checkpoint
+    - **Khánh:** bộ câu thử + metric + chuẩn "đạt" (`eval/`), chạy và chấm lượt 1–2, §5, §7, mô phỏng chi phí (`cost/`, §8)
+    - **Phong:** F3 Feynman (`codebase/feynman.py`, kịch bản mức 3), slide `demo-slides`
+    - **Đức Anh:** F2 heatmap (`codebase/f2_heatmap.py`), tổng hợp bằng chứng `evidence/summary.md`, khảo sát, slide trang 1–2
+- Dùng AI vào việc gì (2–3 dòng; chi tiết `docs/ai-usage.md`): xem mục "Dùng AI vào việc gì" ở `README.md` — Claude Code viết phần lớn code + test, chấm nháp cột `pass` (Khánh chưa kiểm lại hết, ghi ở `eval/README.md`); người trong nhóm duyệt PR và đối chiếu số liệu với data trước khi merge
 - Nhật ký thay đổi — **mọi thay đổi sau CP2 19:30 Thứ Sáu 27/11 phải có dòng ở đây**:
 
 **CP2 → CP4** (vd thu hẹp lát cắt, hỏi thêm người dùng, lần cải tiến trước lượt 2)
@@ -189,6 +204,7 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 |---|---|---|
 | 27/11 tối | Thêm B19–B22 vào `eval/benchmark.csv` (18 → 22 câu: thuong 9 · kho 8 · tu_choi 5), không sửa / xoá câu cũ. Số câu ở §7 là số tại CP2, giữ nguyên | CP3 cần 20–30 câu; thêm kịch bản §5 về xác thực, cost guard, thiếu lab, dữ liệu cá nhân |
 | 28/11 trước lượt 2 | Sửa lõi: đọc đúng mã slide khi model chép cả ngoặc, từ chối repo ngoài khoá và yêu cầu dữ liệu từng bạn, chỉ đưa model hàm mà TODO của CP chỉ tới, thời gian chờ 60 → 120s (cùng các thay đổi khác trên `main` tới `82b3bbf`); bổ sung 1 dòng ở `Day13-s17` trong gói kiến thức. Không đổi câu thử, `expected`, metric, chuẩn "đạt" | Lỗi lượt 1: B08, B09 (mất mã slide), B18, B22 (không từ chối), B11 (timeout) |
+| 28/11 sau lượt 2 (12:47 → trước 14:30) | Chỉ đổi giao diện web + tài liệu, không đổi lõi: link GitHub dán vào ô chat được nhớ (PR #30), khung Feynman gọn + nút "Thử thách tôi" (PR #31), §2 impact có nguồn (PR #28), slide + bỏ chữ "kiểm chứng 100%" (PR #29), §9–§10. `run-2` không bị ảnh hưởng | Khuê thử repo Day11 thấy mất link khi bấm nút CP và khung Feynman hiện 3 bong bóng; Khánh cần số impact cho trang 6 |
 
 **Sau CP4 (đến 23:59 Thứ Bảy 28/11)** (sửa theo góp ý — không sửa chuẩn "đạt", câu thử, số bằng chứng, kết quả các lượt đã chạy)
 
