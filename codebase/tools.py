@@ -90,6 +90,43 @@ def tim_repo(lab: str = "", ten_repo: str = "") -> str:
     return ""
 
 
+GITHUB_URL = re.compile(r"^https://github\.com/([\w.-]+)/([\w.-]+?)(?:\.git)?/?$")
+
+
+def _repos_dir() -> str:
+    return os.environ.get("REPOS_DIR") or os.path.join(ROOT, "data", "repos")
+
+
+@tool
+def lay_repo_github(url: str) -> str:
+    """Tải repo lab của học viên từ GitHub (repo công khai) về thư mục cache để đọc.
+
+    Input: url dạng https://github.com/<owner>/<repo>. Output: đường dẫn thư mục đã tải, "" nếu lỗi
+    (link sai dạng, repo riêng tư, mất mạng, quá 120 giây).
+    Clone `--filter=blob:none`: đủ lịch sử commit cho git diff, chỉ tải nội dung file khi cần.
+    Đã có bản cũ thì `git pull --ff-only`. Không hỏi mật khẩu (GIT_TERMINAL_PROMPT=0).
+    Tác động ra ngoài: CÓ — tải từ mạng, ghi vào REPOS_DIR (mặc định data/repos, gitignored);
+    chỉ đọc repo, không ghi gì lên GitHub.
+    """
+    import subprocess
+
+    m = GITHUB_URL.match(url.strip())
+    if not m:
+        return ""
+    dest = os.path.join(_repos_dir(), f"{m.group(1)}__{m.group(2)}")
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
+    lenh = (["git", "-C", dest, "pull", "--ff-only", "--quiet"] if os.path.isdir(os.path.join(dest, ".git")) else
+            ["git", "clone", "--filter=blob:none", "--quiet", f"https://github.com/{m.group(1)}/{m.group(2)}.git", dest])
+    os.makedirs(_repos_dir(), exist_ok=True)
+    try:
+        r = subprocess.run(lenh, check=False, env=env, capture_output=True, timeout=120)
+    except (OSError, subprocess.TimeoutExpired):
+        return dest if os.path.isdir(os.path.join(dest, ".git")) else ""
+    if r.returncode and not os.path.isdir(os.path.join(dest, ".git")):
+        return ""
+    return dest  # pull lỗi (mất mạng) nhưng đã có bản cũ → vẫn đọc bản cũ
+
+
 @tool
 def doc_cau_truc_lab(repo: str) -> dict:
     """Đọc cấu trúc repo và xác định có phải repo lab không.
@@ -154,8 +191,61 @@ def doc_cp(repo: str, cp: str) -> dict:
         elif ref.endswith(".py") and os.path.isfile(path):
             py_files.append(ref)
     todo = _todo_lines(repo, py_files, cp)
-    return {"mo_ta": mo_ta[:3000], "ham": _loc_ham_theo_todo(repo, _list_functions(repo, py_files), todo, cp),
-            "todo": todo}
+    tat_ca = _list_functions(repo, py_files)
+    ham = _loc_ham_theo_todo(repo, tat_ca, todo, cp)
+    da_viet = _ham_da_viet(repo, py_files)
+    if len(ham) == len(tat_ca) and da_viet:  # TODO không thu hẹp được (vd đã xoá TODO) → lấy hàm học viên đã viết
+        ham = [h for h in tat_ca if (h["file"], h["ham"]) in da_viet] or tat_ca
+    return {"mo_ta": mo_ta[:3000], "ham": ham, "todo": todo,
+            "da_viet": sorted(f"{f}:{h}" for f, h in da_viet)}
+
+
+def _ham_da_viet(repo: str, py_files: list) -> set:
+    """Hàm học viên đã viết / sửa: khác giữa commit đầu tiên (đề BTC lúc tạo repo) và HEAD, theo git diff.
+
+    Đọc dòng đổi ở HEAD (`git diff -U0`), gán vào hàm cấp module chứa dòng đó (ast). Không phải repo git,
+    chỉ có 1 commit, hoặc git lỗi → set rỗng (giữ cách cũ).
+
+    Returns:
+        {(file, ten_ham), ...}, vd {("src/lab13.py", "so_lan_chay_ky_vong")}.
+    """
+    import subprocess
+
+    if not py_files or not os.path.isdir(os.path.join(repo, ".git")):
+        return set()
+
+    def git(*args):
+        r = subprocess.run(["git", "-C", repo, *args], check=False, capture_output=True, timeout=60,
+                           env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+        return r.stdout.decode("utf-8", "replace") if r.returncode == 0 else ""
+
+    try:
+        dau = git("rev-list", "--max-parents=0", "HEAD").split()
+        if not dau or dau[-1] == git("rev-parse", "HEAD").strip():
+            return set()
+        diff = git("diff", "-U0", dau[-1], "HEAD", "--", *sorted(set(py_files)))
+    except (OSError, subprocess.TimeoutExpired):
+        return set()
+    doi = {}  # file → các dòng đổi ở HEAD
+    file = None
+    for line in diff.splitlines():
+        if line.startswith("+++ "):
+            file = line[6:] if line.startswith("+++ b/") else None
+        elif line.startswith("@@") and file:
+            m = re.search(r"\+(\d+)(?:,(\d+))?", line)
+            bat_dau, so = int(m.group(1)), int(m.group(2) if m.group(2) is not None else 1)
+            doi.setdefault(file, set()).update(range(bat_dau, bat_dau + max(so, 1)))
+    out = set()
+    for rel, dong in doi.items():
+        try:
+            tree = ast.parse(_read(os.path.join(repo, rel)))
+        except SyntaxError:
+            continue
+        for n in tree.body:
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and not n.name.startswith("_") and \
+                    dong & set(range(n.lineno, (n.end_lineno or n.lineno) + 1)):
+                out.add((rel, n.name))
+    return out
 
 
 SO_HAM = re.compile(r"\b(\d+|một|hai|ba|bốn|năm|sáu)\s+hàm", re.IGNORECASE)

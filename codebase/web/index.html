@@ -59,6 +59,11 @@ header.top .wrap { display: flex; align-items: center; justify-content: space-be
 .ask textarea { width: 100%; border: 0; resize: vertical; min-height: 64px; font: 500 1.125rem/1.6 var(--font);
   color: var(--text); background: transparent; }
 .ask textarea:focus { outline: none; }
+.repo-row { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border-radius: var(--r-sm); padding: 4px 6px 4px 14px; margin-top: 6px; }
+.repo-row label { font-size: .8125rem; font-weight: 700; color: var(--text-soft); white-space: nowrap; }
+.repo-row input { flex: 1; min-width: 0; border: 0; background: transparent; font: 500 .95rem/1.6 var(--mono); color: var(--text); padding: 8px 4px; }
+.repo-row input:focus { outline: none; }
+.repo-row:focus-within { box-shadow: 0 0 0 2px var(--primary-line); }
 .ask:focus-within { box-shadow: var(--shadow-md), 0 0 0 3px var(--primary-line); }
 .ask-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   border-top: 1px solid var(--border-soft); padding-top: 14px; margin-top: 6px; }
@@ -212,11 +217,13 @@ summary { cursor: pointer; font-weight: 600; color: var(--primary-hover); font-s
   <img class="flower" src="/jade-flower.svg" alt="">
   <div class="reveal">
     <h1>Khái niệm trong slide<br>nằm ở <em>hàm nào</em>?</h1>
-    <p class="lead">Ghi lab và CP bạn đang làm. Agent nối từng khái niệm của bài giảng với đúng file và hàm trong code lab,
-      kèm mã slide làm căn cứ. Không có căn cứ thì nó nói không có.</p>
+    <p class="lead">Làm xong lab rồi? Ghi lab và CP, agent nối từng khái niệm của bài giảng với đúng file và hàm
+      bạn đã viết, kèm mã slide làm căn cứ. Không có căn cứ thì nó nói không có.</p>
     <form class="ask" id="ask">
       <label for="q" class="hidden">Câu hỏi</label>
       <textarea id="q" placeholder="Ví dụ: Lab Day13, CP1. Công thức chi phí trong bài giảng được viết thành những hàm nào?"></textarea>
+      <div class="repo-row"><label for="repo">Repo của bạn</label>
+        <input id="repo" type="url" placeholder="tuỳ chọn: https://github.com/ten-ban/K5-L3B-DAY13-..." autocomplete="url"></div>
       <div class="ask-row">
         <div class="chips" id="examples">
           <button type="button" class="chip-btn" data-q="Lab Day13, CP1. Công thức chi phí trong bài giảng được viết thành những hàm nào?">Day13 CP1: công thức chi phí</button>
@@ -226,7 +233,8 @@ summary { cursor: pointer; font-weight: 600; color: var(--primary-hover); font-s
         <button class="btn" id="send" type="submit">Gửi câu hỏi</button>
       </div>
     </form>
-    <p class="hint">Enter để gửi, Shift + Enter để xuống dòng. Câu hỏi được gộp ẩn danh để đếm "lớp kẹt ở đâu", không lưu tên.</p>
+    <p class="hint">Có link repo (công khai) thì agent đọc đúng code bạn đã viết; để trống thì dùng repo lab có sẵn trên máy.
+      Câu hỏi được gộp ẩn danh để đếm "lớp kẹt ở đâu", không lưu tên.</p>
   </div>
 </div></section>
 
@@ -248,7 +256,7 @@ summary { cursor: pointer; font-weight: 600; color: var(--primary-hover); font-s
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ISSUE = "https://github.com/mKhaiTruong/K5-Day15-L3B-G2026/issues/new";
-const NHAN = { sua: "✏️ Sửa", doc: "📖 Đọc", khong_dung: "⛔ Không đụng" };
+const NHAN = { sua: "✏️ Bạn viết", doc: "📖 Có sẵn", khong_dung: "⛔ File khung" };
 const MUC = { 1: "Mức 1 · giải thích bằng lời thường", 2: "Mức 2 · chỉ ra file và hàm", 3: "Mức 3 · đoán kết quả" };
 let last = null;          // dữ liệu /api/hoi gần nhất
 let fy = null;            // phiên Feynman: {phien, cau, i, cho, truoc, kq}
@@ -261,7 +269,8 @@ async function api(path, body) {
 }
 
 /* ---------- hỏi ---------- */
-const q = $("#q"), send = $("#send"), out = $("#out"), status = $("#status");
+const q = $("#q"), send = $("#send"), out = $("#out"), status = $("#status"), repoIn = $("#repo");
+repoIn.value = new URLSearchParams(location.search).get("repo") || localStorage.getItem("repo") || "";
 document.querySelectorAll("#examples button").forEach(b => b.addEventListener("click", () => { q.value = b.dataset.q; hoi(); }));
 $("#ask").addEventListener("submit", e => { e.preventDefault(); hoi(); });
 q.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); hoi(); } });
@@ -273,16 +282,19 @@ async function hoi(text) {
   text = (text ?? q.value).trim();
   if (!text) { q.focus(); return; }
   q.value = text; send.disabled = true; status.textContent = "Agent đang làm việc…";
+  const repo = repoIn.value.trim();
+  localStorage.setItem("repo", repo);
+  const full = repo && !/github\.com\//i.test(text) ? text + "\nRepo: " + repo : text;
   const t0 = Date.now();
   out.innerHTML = `<div class="panel loading"><div class="spinner" aria-hidden="true"></div><div>
     <h3>Agent đang đọc lab và slide <span id="sec">0</span> giây</h3>
     <p style="color:var(--text-soft);font-size:1rem;margin:4px 0 0">Thường mất 20–60 giây vì phải gọi model thật. Các bước:</p>
-    <ol class="steps6"><li>Tìm repo lab, kiểm có đúng là lab của khoá</li><li>Hỏi lại nếu chưa rõ CP</li>
+    <ol class="steps6"><li>${repo ? "Tải repo của bạn từ GitHub, kiểm có đúng là lab của khoá" : "Tìm repo lab, kiểm có đúng là lab của khoá"}</li><li>Hỏi lại nếu chưa rõ CP</li>
     <li>Đọc mô tả CP, dòng TODO và file khung không được sửa</li><li>Tìm đoạn slide liên quan trong gói kiến thức</li>
     <li>Gọi model ghép khái niệm với hàm</li><li>Kiểm bằng code: hàm có thật, mã slide có thật, file khung không bị gắn sửa</li></ol></div></div>`;
   timer = setInterval(() => { const s = $("#sec"); if (s) s.textContent = Math.round((Date.now() - t0) / 1000); }, 1000);
   try {
-    last = await api("/api/hoi", { text });
+    last = await api("/api/hoi", { text: full });
     last.giay = (Date.now() - t0) / 1000;
     render(last);
     status.textContent = "Xong sau " + last.giay.toFixed(0) + " giây";
@@ -314,13 +326,13 @@ function render(d) {
   out.innerHTML = `
   <div class="result">
     <div>
-      <div class="section-head"><h2>Lộ trình đọc code <em>${esc(o.lab)} ${esc(o.cp || "")}</em></h2>
+      <div class="section-head"><h2>Đọc lại code <em>${esc(o.lab)} ${esc(o.cp || "")}</em></h2>
         <p>${d.lo_trinh.buoc.length} file, ${o.khai_niem.length} khái niệm</p></div>
       ${o.ghi_chu ? `<div class="panel notice" style="margin-bottom:16px"><p>⚠️ ${esc(o.ghi_chu)}</p></div>` : ""}
       <figure class="diagram" style="margin:0 0 20px">
         <div class="svg-box">${ve(d.do_thi)}</div>
-        <div class="legend"><span><i style="background:var(--primary-soft);border:2px solid var(--primary)"></i>Hàm bạn phải viết hoặc sửa</span>
-          <span><i style="background:#fff;border:2px solid var(--border)"></i>Hàm chỉ cần đọc</span>
+        <div class="legend"><span><i style="background:var(--primary-soft);border:2px solid var(--primary)"></i>Hàm bạn viết ở CP này</span>
+          <span><i style="background:#fff;border:2px solid var(--border)"></i>Hàm có sẵn, đọc để hiểu</span>
           <span><i style="background:#fff;border:2px dashed var(--text-muted)"></i>Hàm phụ được gọi tới</span>
           <span>${d.do_thi.cap === "ham" ? "Mũi tên: hàm này gọi hàm kia" : "Mũi tên liền: import · đứt: thứ tự đọc"}</span></div>
         ${d.lo_trinh.buoc.length > 1 ? `<ol class="order">${files}</ol>` : ""}

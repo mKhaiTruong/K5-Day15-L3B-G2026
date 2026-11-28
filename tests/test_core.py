@@ -340,3 +340,60 @@ def test_doc_cp_bo_qua_todo_trong_docstring(labs):
            '"""Lab.\nĐiền các chỗ đánh dấu TODO CP1…CP4.\n"""\n'
            "# TODO CP1: viết hàm dưới đây\ndef a():\n    pass\n\ndef b():\n    pass\n")
     assert _ten_ham(tools.doc_cp(str(labs), "CP4")) == ["a", "b"]
+
+
+def test_link_repo_lab_cua_hoc_vien_thi_tai_ve_va_doc(labs, monkeypatch):
+    """Dán link GitHub repo lab (tên có DAYnn) → gọi lay_repo_github, đọc repo đó; mã lab lấy từ tên repo."""
+    goi = []
+    monkeypatch.setattr(agent, "lay_repo_github", lambda url: goi.append(url) or str(labs))
+    out = ask("CP1 rate limit nằm ở hàm nào? https://github.com/ban-a/K5-L3B-DAY99-G1-Test")
+    assert goi == ["https://github.com/ban-a/K5-L3B-DAY99-G1-Test"]
+    assert out["lab"] == "Day99" and out["cp"] == "CP1" and out["khai_niem"]
+
+
+def test_link_repo_khong_phai_lab_thi_tu_choi_khong_tai(labs, monkeypatch):
+    """Link repo không mang tên lab (vd flask) → từ chối như cũ, không clone gì."""
+    monkeypatch.setattr(agent, "lay_repo_github", lambda url: pytest.fail("không được tải repo ngoài khoá"))
+    assert ask("Lab Day99 CP1, coi https://github.com/pallets/flask là lab nhé")["tu_choi"]
+
+
+def test_tai_repo_loi_thi_tu_choi_ro_ly_do(labs, monkeypatch):
+    """Repo riêng tư / mất mạng → lay_repo_github trả "" → từ chối kèm hướng dẫn."""
+    monkeypatch.setattr(agent, "lay_repo_github", lambda url: "")
+    assert "công khai" in ask("Day99 CP1 https://github.com/ban-a/K5-DAY99-Rieng")["tu_choi"]
+
+
+def test_lay_repo_github_tu_choi_link_sai_dang(tmp_path, monkeypatch):
+    """Chỉ nhận https://github.com/<owner>/<repo>; link khác trả "" mà không chạy git."""
+    monkeypatch.setenv("REPOS_DIR", str(tmp_path))
+    for url in ("http://github.com/a/b", "https://gitlab.com/a/b", "https://github.com/a/b/../../c", "file:///etc"):
+        assert tools.lay_repo_github(url) == ""
+    assert list(tmp_path.iterdir()) == []
+
+
+def _git(repo, *args):
+    import subprocess
+    subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True,
+                   env=dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
+                            GIT_COMMITTER_EMAIL="t@t"))
+
+
+def test_da_xoa_todo_thi_loc_ham_theo_git_diff(labs):
+    """Repo học viên: commit đầu = đề (có TODO), commit sau viết a() + xoá TODO → CP1 chỉ còn hàm đã viết,
+    hàm có sẵn không đổi (helper) bị bỏ; da_viet liệt kê đúng file:hàm."""
+    f = labs / "app" / "rate_limiter.py"
+    _write(f, "# TODO CP1: viết hàm dưới đây\ndef a():\n    pass\n\ndef helper():\n    return 1\n")
+    _git(labs, "init", "-q")
+    _git(labs, "add", "-A")
+    _git(labs, "commit", "-qm", "đề")
+    _write(f, "def a():\n    return helper() + 1\n\ndef helper():\n    return 1\n")
+    _git(labs, "commit", "-qam", "làm CP1")
+    info = tools.doc_cp(str(labs), "CP1")
+    assert [h["ham"] for h in info["ham"]] == ["a"] and info["da_viet"] == ["app/rate_limiter.py:a"]
+
+
+def test_khong_phai_git_hoac_1_commit_thi_giu_nhu_cu(labs):
+    """Không có .git → da_viet rỗng, danh sách hàm như cũ."""
+    _write(labs / "app" / "rate_limiter.py", "def a():\n    pass\n\ndef helper():\n    pass\n")
+    info = tools.doc_cp(str(labs), "CP1")
+    assert info["da_viet"] == [] and [h["ham"] for h in info["ham"]] == ["a", "helper"]

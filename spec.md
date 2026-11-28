@@ -78,6 +78,7 @@ flowchart TD
   | Công cụ | Input | Output | Tác động ra ngoài? |
   |---|---|---|---|
   | `tim_repo` | mã lab (`Day14`) hoặc tên repo | đường dẫn repo trong `LABS_DIR`, rỗng nếu không có | Không |
+  | `lay_repo_github` | link `https://github.com/<owner>/<repo>` (repo lab của học viên, tên có `DAYnn`) | đường dẫn bản tải về, rỗng nếu lỗi / riêng tư | Có: tải từ mạng, ghi vào `data/repos/` (chỉ đọc repo) |
   | `doc_cau_truc_lab` | đường dẫn repo | cây file, nội dung README / CHECKPOINTS, `la_lab` (bool) | Không |
   | `doc_cp` | repo, mã CP | đoạn mô tả CP + file có `TODO` của CP | Không |
   | `tim_file_khung` | repo | danh sách file ghi "không sửa" trong README / AGENTS | Không |
@@ -141,7 +142,7 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
     - khái niệm không có trong gói slide → `slide = khong_co_can_cu`, vẫn trỏ code nhưng ghi rõ không có căn cứ bài giảng
     - hàm hoặc mã slide do model bịa → bước 6 kiểm bằng code (`kiem_ham_ton_tai`, `ma_slide_ton_tai`), bỏ hàm bịa, mã bịa đổi thành `khong_co_can_cu`
     - lab chưa có trong hệ thống → từ chối: "Chưa có DayNN trong hệ thống"
-- **Người dùng sửa:** học viên thấy sai thì hỏi lại cụ thể hơn (nêu tên hàm / khái niệm). Câu có tiền đề sai (vd "sửa `grader.py` đúng không?") → vẫn trả bản đồ, kèm `ghi_chu` chỉ ra đó là file khung. *Chưa có:* nút báo sai, lưu phản hồi; heatmap chỉ ghi câu hỏi gộp ẩn danh.
+- **Người dùng sửa:** học viên thấy sai thì hỏi lại cụ thể hơn (nêu tên hàm / khái niệm). Câu có tiền đề sai (vd "sửa `grader.py` đúng không?") → vẫn trả bản đồ, kèm `ghi_chu` chỉ ra đó là file khung. Mỗi khái niệm trên giao diện web có link "Báo chỗ sai" (mở issue GitHub điền sẵn lab, CP, file:hàm, mã slide). *Chưa có:* lưu phản hồi trong app; heatmap chỉ ghi câu hỏi gộp ẩn danh.
 - **Bị đòi ngoài phạm vi (lớp 3):** từ chối và chỉ đường quay lại việc học.
     - đòi viết hộ code CP, lách script chấm, "bỏ qua hướng dẫn" → "Mình chỉ chỉ đường và giải thích, không làm hộ bài hay lách script chấm."
     - đòi sửa file khung → từ chối, kèm danh sách `khong_dung` và chỉ về các TODO của CP
@@ -149,6 +150,11 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 - **Trường hợp đặc thù lĩnh vực (lớp 4):** sai đắt nhất là chỉ học viên sửa nhầm file khung (hỏng test, mất điểm) hoặc gắn nhầm nhãn `doc` / `sua` (học viên bỏ sót hàm phải viết).
     - file khung → bước 6 ép nhãn `khong_dung` bằng code, model nói gì cũng không đổi được; file test bị loại khỏi danh sách hàm
     - nhãn `sua` → model được đưa dòng `TODO` của đúng CP + số dòng hàm; vẫn có thể sai, đo bằng metric `tro_dung_code`
+- **Dùng sau khi xong lab, trên repo của chính học viên** (ý Phong, làm 28/11): dán link GitHub repo lab (công khai, tên có `DAYnn`) → lõi tải về đọc code học viên đã viết; xoá hết `# TODO` thì lọc hàm theo `git diff` so với commit đầu (đề lúc tạo repo).
+- **Chưa làm (biết rồi, để sau — slide 8 "nếu có thêm 1 tuần"):**
+    - Feynman hỏi trên chính code học viên viết ("vì sao bạn viết dòng này thế này") — hiện Feynman chỉ chấm mức khái niệm (đối chiếu slide) và tên hàm, chưa đọc thân hàm
+    - chặn theo giờ nộp lab: lab chưa tới hạn vẫn trả lời → nếu làm thì mở theo lịch giờ nộp của từng Day, tránh thành công cụ làm hộ khi đang làm bài
+    - repo GitHub riêng tư không đọc được (không xin token, không hỏi mật khẩu) → học viên phải để công khai hoặc dùng repo có sẵn trên máy chạy app
 
 ## §7. Đánh giá & chuẩn "đạt" *(guide 2.4, 4.1)*
 - Data card: `data/DATA_CARD.md` · bộ câu thử: `eval/benchmark.csv` — 18 câu (thuong 7 · kho 7 · tu_choi 4) · metric: `eval/metric_spec.yaml` (4 metric: tro_dung_code · khong_sua_file_khung · co_can_cu_slide · hoi_lai_va_tu_choi_dung)
