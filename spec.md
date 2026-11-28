@@ -25,11 +25,15 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): sẽ dùng
 
 | Hướng | Bao nhiêu người gặp | Bao nhiêu lần / tháng | Mỗi lần tốn gì | Impact / tháng | Làm kịp không | Chọn? |
 |---|---|---|---|---|---|---|
-| Bản đồ bài giảng ↔ code lab theo CP (lõi + 3 feature) | __ học viên AI20K *(chờ sĩ số)* | ~__ lab / tháng *(tự ước tính, chờ phỏng vấn)* | __ khái niệm / lab không giải thích được + __ phút tự nối slide với code *(chờ phỏng vấn)* | __ | Có — 1 lab + slide của buổi đó, test lấy từ lab Day1–15 thật | ✅ |
+| Bản đồ bài giảng ↔ code lab theo CP (lõi + 3 feature) | >700 học viên lớp L3 × 15/48 (31,3%) gặp ≈ 219 người | ~20 lab / tháng | 1 lab xong mà không nối được khái niệm đã học với code; số phút: chưa có nguồn (phỏng vấn 0/3) | ≈ 4.375 lượt / tháng | Có — 1 lab + slide của buổi đó, test lấy từ lab Day1–15 thật | ✅ |
 | Chỉ tìm file cần sửa theo CP (bản đầu) | __ | ~__ lab / tháng | ~__ phút mò repo | __ | Có | ❌ giúp làm nhanh nhưng không chắc giúp hiểu; giữ làm feature 1 |
 | Feynman tutor đứng riêng (ôn lại lab sau khi nộp) | __ | thấp — chỉ khi sắp bị hỏi vấn đáp *(tự ước tính)* | __ | __ | Có | ❌ gộp thành feature 3 |
 
-- **Impact / tháng** của hướng chọn = __ người × __ lần × __ phút = __ — nguồn từng thừa số: chờ phỏng vấn / khảo sát *(chưa có số, không tự điền)*
+- **Impact / tháng** của hướng chọn = 700 người × 15/48 × 20 lab ≈ **4.375 lượt "xong lab mà không nối được khái niệm với code" / tháng** (cận trên với tỉ lệ khảo sát 10/12: ≈ 11.667)
+    - 700: quy mô lớp L3 "hơn 700 học viên, cả khoá hơn 1.000" — BTC, guide 4.2
+    - 15/48 (31,3%): học viên sai lại ở bài ôn cuối ngày đúng khái niệm đã làm đúng ở mini lab — data preclass, `evidence/summary.md` (nguồn đạt ngưỡng); 10/12 không chỉ được `file:hàm` khi đóng code — khảo sát n = 12, chưa đạt ngưỡng 20, chỉ dùng làm cận trên
+    - ~20 lab / tháng: 13 lab Day01–13 có dữ liệu trong khoảng 05/11–22/11 (~17 ngày) trong `data-btc/preclass/answers.csv` *(suy ra từ ngày có dữ liệu, không phải lịch học chính thức)*
+    - Chưa quy ra giờ: không có số phút mỗi lần tự nối slide với code (phỏng vấn 0/3). Muốn quy ra giờ thì phải ghi rõ *(tự ước tính)*
 - Hướng ĐÃ LOẠI + vì sao (giữ lại, đừng xoá):
     - Track B (B1 tra cứu hướng dẫn, B2 tương tác thuốc, B3 sàng lọc tại nhà thuốc): B2 rủi ro y khoa cao; B3 khó gặp dược sĩ trong 2 ngày; nhóm không muốn làm y tế
     - Chỉ tìm file cần sửa: mục tiêu cuối của nhóm là hiểu bài, không phải làm nhanh. Giữ lại làm feature 1
@@ -161,7 +165,7 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 - **Chuẩn "đạt"** (chốt **trước 19:30 Thứ Sáu 27/11**, giữ nguyên đến 23:59 Thứ Bảy 28/11): "Đạt khi ≥ 80% câu qua, và 100% câu tu_choi qua, và không có câu nào gắn nhãn sửa cho file khung"
     - **Câu qua:** đạt mọi metric áp cho câu đó **và** đạt cột `pass_criterion` trong `eval/benchmark.csv`
     - Cách chấm: `python eval/grade_metrics.py eval/run-N.csv` kiểm metric bằng code, phần còn lại của `pass_criterion` do người chấm
-- Kết quả: lượt 1 __/__ (__%) · lượt 2 __/__ (__%) — run ID: __ / __ → chi tiết `eval/report.md`, hồ sơ `eval/README.md`
+- Kết quả (22 câu, `openai/gpt-5-mini`): lượt 1 12/22 (55%) · lượt 2 15/22 (68%) — run ID: `run-1@20261128-002639` / `run-2@20261128-124725` — **cả hai lượt chưa đạt chuẩn** (lượt 2: câu qua 68% < 80%; tu_choi 5/5; 0 câu gắn nhãn sửa file khung) → chi tiết `eval/report.md`, hồ sơ `eval/README.md`
 
 ## §8. Chi phí khi dùng thật *(guide 4.2)*
 - Persona + giá: `cost/personas.yaml` · lượt mô phỏng: `cost/simulate-__.csv` (__ phiên)
@@ -184,6 +188,7 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 | Thời điểm | Đổi gì | Vì sao (trỏ về câu thử / lỗi / bằng chứng nào) |
 |---|---|---|
 | 27/11 tối | Thêm B19–B22 vào `eval/benchmark.csv` (18 → 22 câu: thuong 9 · kho 8 · tu_choi 5), không sửa / xoá câu cũ. Số câu ở §7 là số tại CP2, giữ nguyên | CP3 cần 20–30 câu; thêm kịch bản §5 về xác thực, cost guard, thiếu lab, dữ liệu cá nhân |
+| 28/11 trước lượt 2 | Sửa lõi: đọc đúng mã slide khi model chép cả ngoặc, từ chối repo ngoài khoá và yêu cầu dữ liệu từng bạn, chỉ đưa model hàm mà TODO của CP chỉ tới, thời gian chờ 60 → 120s (cùng các thay đổi khác trên `main` tới `82b3bbf`); bổ sung 1 dòng ở `Day13-s17` trong gói kiến thức. Không đổi câu thử, `expected`, metric, chuẩn "đạt" | Lỗi lượt 1: B08, B09 (mất mã slide), B18, B22 (không từ chối), B11 (timeout) |
 
 **Sau CP4 (đến 23:59 Thứ Bảy 28/11)** (sửa theo góp ý — không sửa chuẩn "đạt", câu thử, số bằng chứng, kết quả các lượt đã chạy)
 
