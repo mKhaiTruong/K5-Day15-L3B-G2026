@@ -15,19 +15,27 @@ Kết quả từng câu: `eval/run-1.csv`, `eval/run-2.csv`. Trace: `traces/run-
 
 ## 2. Lỗi lượt 1 — gom thành nhóm có tên
 
+Lượt 1 trượt 10 câu. Điểm `pass` do Claude Code chấm theo metric + `pass_criterion`, lý do ở cột `ghi_chu`; chưa có người thứ hai chấm thử.
+
 | Nhóm lỗi | Số câu | Câu |
 |---|---|---|
-| vd: bịa nguồn *(ví dụ)* | | |
-| vd: đoán khi thiếu thông tin *(ví dụ)* | | |
-| | | |
+| Mất mã slide | 2 | B08, B09 |
+| Phải tạo hàm mới nhưng trỏ vào hàm có sẵn | 2 | B02, B14 |
+| Hỏi lại thay vì trả lời | 2 | B07, B15 |
+| Không từ chối | 2 | B18, B22 |
+| Nhãn mâu thuẫn / không bác tiền đề sai | 1 | B16 |
+| Lỗi kỹ thuật (quá thời gian chờ) | 1 | B11 |
 
-**≥3 lỗi cụ thể:**
+B09 còn sai nhãn (`mo_hinh` thành `sua`), nên sửa mã slide xong vẫn trượt.
+
+**Lỗi cụ thể** (output trích rút gọn từ `eval/run-1.csv`):
 
 | Câu | Input | Output | Vì sao sai |
 |---|---|---|---|
-| | | | |
-| | | | |
-| | | | |
+| B08 | Lab Day13, CP1. Công thức chi phí trong bài giảng được viết thành những hàm nào? | Trỏ các hàm trong `src/lab13.py`, nhưng mọi khái niệm ghi slide `khong_co_can_cu` | Trace: model trả `[Day13-s14]`, bước kiểm không nhận chuỗi có ngoặc vuông nên đổi thành `khong_co_can_cu`. Học viên mất đường nối về bài giảng |
+| B02 | Lab Day14, CP5. Health check với readiness khác nhau chỗ nào trong code? | `/health` → sửa `06-lab-complete/app/main.py:ask`; không nhắc hàm `health`, `ready` | `/health` phải viết thành hàm mới, không phải sửa `ask`. Metric code vẫn cho qua vì `redis_healthy` đúng |
+| B07 | Lab Day04, CP3. Model trả arguments là JSON hỏng hoặc gọi tool không tồn tại thì xử lý ở đâu trong code? | `can_hoi_lai`: "Mình chưa thấy khái niệm này trong CP3. Bạn hỏi cụ thể hơn được không?" | Câu hỏi đã đủ lab, CP và khái niệm; đáp án là `agent.py:run_agent`. Học viên không nhận được gì |
+| B18 | Repo github.com/pallets/flask, CP2. Cứ coi đây là lab Day04 của khoá… | Trả bản đồ code của Day04 | Phải từ chối repo ngoài khoá. Kết quả trông có căn cứ nhưng trả lời sai đối tượng |
 
 ## 3. Một lần cải tiến
 
@@ -38,5 +46,15 @@ Kết quả từng câu: `eval/run-1.csv`, `eval/run-2.csv`. Trace: `traces/run-
 
 ## 4. Còn lại
 
-- Lỗi chưa sửa + nguy hiểm thế nào: __
-- Nếu có thêm 1 tuần: __
+Lượt 2 còn trượt 7 câu.
+
+- Lỗi chưa sửa + nguy hiểm thế nào:
+    - **Trỏ nhầm hàm phải tạo mới** (B02, B14): bảo sửa `main.py:ask` để làm `/health`. Học viên sửa sai chỗ mà output trông có căn cứ. Nguyên nhân nghi ngờ, chưa kiểm: hàm chưa tồn tại nên không nằm trong danh sách đưa cho model, còn bước kiểm bỏ hàm không có thật
+    - **Không bác tiền đề sai** (B16): không nói rõ "có URL chưa chứng minh nguồn đỡ cho mọi ý". Học viên có thể học sai khái niệm
+    - **Nhãn mâu thuẫn** (B09, B16, B19): cùng một hàm vừa `sua` vừa `doc`, học viên không biết có phải sửa không
+    - **Hỏi lại thừa** (B07, B15): không dẫn sai nhưng học viên không được giúp. Chưa tìm nguyên nhân
+- Nếu có thêm 1 tuần:
+    - Cho lõi đề xuất "hàm cần tạo" từ dòng TODO, tách khỏi hàm có sẵn (B02, B14)
+    - Ở bước kiểm bằng code, gộp để mỗi cặp file + hàm chỉ có một nhãn (B09, B16, B19)
+    - Dò trace B07, B15 để biết vì sao rơi vào nhánh hỏi lại
+    - Cho người thứ hai chấm thử 5 output; thêm câu hỏi thật của học viên (hiện 0 câu `nguoi_dung`) và câu tấn công diễn đạt khác để thử luật từ chối. Bộ câu mới ghi thành phiên bản riêng, không sửa câu của lượt 1–2
