@@ -691,7 +691,7 @@
                 </tr>
                 <tr>
                   <td><strong>App giám sát từng học viên</strong></td>
-                  <td>Lộ lỗi cá nhân, trái luật Track A → heatmap chỉ hiện số gộp (<strong>≥ 5 người</strong>).</td>
+                  <td>Lộ lỗi cá nhân, trái luật Track A → heatmap chỉ hiện số gộp (<strong>dưới 5 → chưa đủ dữ liệu</strong>).</td>
                 </tr>
                 <tr>
                   <td><strong>Track B (y tế) / Gallery repo</strong></td>
@@ -731,7 +731,7 @@
                 <tr>
                   <td><strong>ChatGPT / Claude</strong></td>
                   <td>Dễ bịa tên hàm / nguồn slide; sẵn sàng viết hộ code hoặc bảo sửa cả file khung.</td>
-                  <td><span class="pill-good">Không viết hộ &amp; chặn bịa</span><br />Hỏi lại khi thiếu CP, chỉ chỉ đường và kiểm chứng 100% bằng code ở bước 6.</td>
+                  <td><span class="pill-good">Không viết hộ &amp; chặn bịa</span><br />Hỏi lại khi thiếu CP, chỉ chỉ đường; bước 6 kiểm bằng code: hàm có thật, mã slide có thật, file khung không bị gắn sửa.</td>
                 </tr>
               </tbody>
             </table>
@@ -760,7 +760,7 @@
           <div class="eyebrow">Track A · EdTech · Trang 3/8</div>
           <h1 class="title">Giải pháp: Workflow 6 bước + 1 lõi dùng chung 3 feature</h1>
           <p class="subtitle">
-            <strong>Lát cắt 1 câu:</strong> Học viên chọn lab + CP → AI ghép khái niệm slide với <code>file:hàm</code> (đọc / sửa / không đụng) và kiểm chứng 100% bằng code.
+            <strong>Lát cắt 1 câu:</strong> Học viên chọn lab + CP → AI ghép khái niệm slide với <code>file:hàm</code> (đọc / sửa / không đụng), rồi bước 6 kiểm bằng code: hàm có thật, mã slide có thật, file khung không bị gắn sửa.
           </p>
         </div>
         <div class="meta-badge">
@@ -890,7 +890,7 @@
             </div>
             <ul class="clean orange" style="margin-top: 4px;">
               <li><strong>F3 Feynman (Phong):</strong> sau card khái niệm, agent hỏi lại 3 mức; chưa đạt thì trỏ lại đúng <code>Day13-s&lt;trang&gt;</code> + <code>file:hàm</code>.</li>
-              <li><strong>F2 Heatmap (Đức Anh):</strong> badge <code>🔥 x/N</code> chỉ hiện khi <code>≥ 5</code> người.</li>
+              <li><strong>F2 Heatmap (Đức Anh):</strong> badge <code>🔥 x/N</code> chỉ hiện khi <code>≥ 5</code> lượt hỏi (log app chưa có id ẩn danh nên đếm lượt, chưa đếm người); tab <em>Lớp kẹt ở đâu</em> thêm số gộp từ data preclass (≥ 5 người).</li>
             </ul>
           </div>
         </div>
@@ -1133,7 +1133,7 @@
             </div>
             <ul class="clean orange">
               <li><strong>Không sửa repo:</strong> Không viết hộ code, không sửa file khung.</li>
-              <li><strong>Không giám sát cá nhân:</strong> Heatmap chỉ hiện số gộp khi <code>≥ 5</code> người; kết quả Feynman chỉ học viên tự xem.</li>
+              <li><strong>Không giám sát cá nhân:</strong> Heatmap chỉ hiện số gộp, dưới 5 (lượt hỏi trên app / người trong data preclass) ghi chưa đủ dữ liệu; kết quả Feynman chỉ học viên tự xem.</li>
               <li><strong>Không tự suy diễn:</strong> Thiếu căn cứ slide ghi <code>khong_co_can_cu</code>.</li>
               <li><strong>Lỗi nguy hiểm nhất:</strong> bị ép coi repo ngoài khoá là lab (B18) → trả bản đồ sai mà trông có căn cứ. Đã chặn bằng code ở PR #18, lượt 2 qua.</li>
             </ul>
