@@ -212,3 +212,4 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 |---|---|---|
 | 28/11 sau 14:30 | README hạng mục 7: thêm link video dự phòng CP4 (https://youtu.be/6WCbfzqKo7Y) và video CP3 (https://youtu.be/9zUn2nzibEI). Không đổi code, câu thử, kết quả | Video đã nộp ở form CP3 / CP4, ghi vào repo cho giám khảo xem |
 | 28/11 tối | Chạy `simulate` 50 phiên (`simulate-1`), điền `cost/cost-estimate.md`, §8 và slide trang 6; ghi nguồn số lượt dùng của persona là (tự ước tính). Không đổi code lõi, câu thử, metric, chuẩn "đạt", kết quả lượt 1–2 | Tại CP4 chưa có kết quả mô phỏng: hai lần chạy trước bị dừng do máy thiếu bộ nhớ, không lưu kết quả |
+| 28/11 tối | `eval/report.md`: điền mục 2 (lỗi lượt 1) và mục 4 (lỗi còn lại, việc tiếp theo); thêm `reflection/trieu-quoc-khanh.md`. Không đổi code, câu thử, kết quả | Hoàn thiện hồ sơ đánh giá và reflection trước hạn chót |
