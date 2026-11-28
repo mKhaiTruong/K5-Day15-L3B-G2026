@@ -49,7 +49,7 @@ Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay
 
 Một trang gom cả lõi + 3 feature, 2 tab:
 
-- **Hỏi bài:** hỏi 1 câu → sơ đồ hàm của CP → khái niệm ↔ `file : hàm` kèm mã slide → "Giải thích lại cho người mới" (Feynman, F3)
+- **Hỏi bài:** hỏi 1 câu → sơ đồ hàm của CP → khái niệm ↔ `file : hàm` kèm mã slide → "Thử thách tôi" (Feynman, F3: giải thích lại cho AI đóng vai người mới)
 - **Lớp kẹt ở đâu** (F2, cho người ra đề / mentor): số gộp từ data preclass BTC (Day × khái niệm, số người sai lần đầu ở bài ôn) + từ câu hỏi ẩn danh trên app. < 5 người → "chưa đủ dữ liệu", không có trang xem từng người
 
 1. Điền `.env` (copy từ `.env.example`):
@@ -60,7 +60,7 @@ Một trang gom cả lõi + 3 feature, 2 tab:
     python codebase/web.py            # tự mở http://127.0.0.1:8000
     python codebase/web.py --port 8080 --no-open
     ```
-3. Thử: bấm chip "Day13 CP1: công thức chi phí" (gọi model thật, ~20–60 giây) → bấm "Giải thích lại cho người mới" trên 1 card → bấm chip "Thử nhờ làm hộ" để thấy bị từ chối.
+3. Thử: bấm chip "Day13 CP1: công thức chi phí" (gọi model thật, ~20–60 giây) → bấm "Thử thách tôi" trên 1 card → bấm chip "Thử nhờ làm hộ" để thấy bị từ chối.
     - mở thẳng 1 câu: `http://127.0.0.1:8000/?q=Lab Day13, CP1. Công thức chi phí trong bài giảng được viết thành những hàm nào?`
     - đọc repo **đã làm xong của chính bạn**: dán link GitHub (công khai, tên có `DAYnn`) vào ô "Repo của bạn" → lõi tải về `data/repos/` (gitignored) và đọc code bạn đã viết; xoá hết `# TODO` rồi thì lõi lọc hàm theo `git diff` so với commit đầu (đề lúc tạo repo)
     - mở thẳng tab heatmap: `http://127.0.0.1:8000/?tab=heat` (cần `data-btc/preclass/answers.csv` trên máy, không commit)

@@ -340,7 +340,7 @@ function render(d) {
         ${d.lo_trinh.buoc.length > 1 ? `<ol class="order">${files}</ol>` : ""}
       </figure>
       ${(o.khong_dung || []).length ? `<div class="khung"><strong>⛔ Đừng sửa các file khung của đề</strong>${o.khong_dung.map(f => `<code>${esc(f)}</code>`).join("")}</div>` : ""}
-      <div class="section-head"><h2>Khái niệm ↔ code</h2><p>Bấm "Giải thích lại" để tự kiểm mình hiểu chưa</p></div>
+      <div class="section-head"><h2>Khái niệm ↔ code</h2><p>Bấm "Thử thách tôi" để tự kiểm mình hiểu chưa</p></div>
       <div class="cards">${o.khai_niem.map((k, i) => card(k, i, d.badge[k.ten], o, cp)).join("")}</div>
       ${stats(d)}
     </div>
@@ -363,7 +363,7 @@ function card(k, i, badge, o, cp) {
     <div class="kn-meta">${slide}${heat}</div>
     <ul class="code-list">${code}</ul>
     ${k.ly_do ? `<details><summary>Vì sao nối như vậy</summary><p style="margin-top:8px">${esc(k.ly_do)}</p></details>` : ""}
-    <div class="kn-foot"><button class="btn small" data-fy="${i}">Giải thích lại cho người mới</button>
+    <div class="kn-foot"><button class="btn small" data-fy="${i}">🎯 Thử thách tôi</button>
       <a href="${esc(link)}" target="_blank" rel="noopener">Báo chỗ sai (mở issue GitHub)</a></div>
   </article>`;
 }
@@ -481,11 +481,11 @@ function veHeat() {
 
 /* ---------- Feynman ---------- */
 function feynmanPanel() {
-  return `<aside class="feynman" aria-label="Giải thích lại cho người mới">
+  return `<aside class="feynman" aria-label="Feynman: thử thách mình hiểu chưa">
     <span class="f-label">Feynman (tự học)</span>
     <h2>Your partner in <em>crime</em></h2>
     <p class="f-sub">Try your knowledge here.</p>
-    <div class="f-log" id="flog"><p class="f-empty">Chọn một khái niệm bên trái, bấm "Giải thích lại cho người mới" để bắt đầu.</p></div>
+    <div class="f-log" id="flog"><p class="f-empty">Chọn một khái niệm bên trái, bấm "Thử thách tôi" để bắt đầu.</p></div>
     <div id="fabc" class="f-abc hidden" style="margin-top:12px"><button data-c="A">A</button><button data-c="B">B</button><button data-c="C">C</button></div>
     <form class="f-input hidden" id="fform"><textarea id="fq" placeholder="Giải thích bằng lời của bạn…" aria-label="Câu trả lời"></textarea>
       <button class="btn" type="submit">Gửi</button></form>
@@ -514,7 +514,11 @@ async function batDau(ten) {
     fy = { ...d, i: -1, truoc: "", kq: [], ten };
     if (!d.cau.length) { bub("kq", "Khái niệm này chưa gắn với hàm nào nên chưa có gì để hỏi."); return; }
     log().innerHTML = "";
-    bub("bot", `Chào bạn, mình mới học, chưa biết gì về <b>${esc(ten)}</b>. Mình hỏi ${d.cau.length} câu nhé, bạn trả lời bằng lời của mình.`);
+    const that = d.cau.filter(c => !c.bo_qua);
+    fy.tong = that.length; fy.so = 0;
+    if (!that.length) { bub("kq", "Khái niệm này chưa có câu nào để hỏi."); return; }
+    const bo = d.cau.length > that.length ? " (chưa có slide cho khái niệm này nên bỏ câu giải thích bằng lời)" : "";
+    fy.mo = `Mình chưa biết gì về <b>${esc(ten)}</b>. ${that.length} câu, trả lời bằng lời của bạn${bo}.`;
     tiep();
   } catch (err) { bub("kq", "❌ " + esc(err.message)); }
 }
@@ -528,8 +532,10 @@ function tiep() {
   fy.i++; fy.truoc = "";
   if (fy.i >= fy.cau.length) return ketThuc();
   const c = fy.cau[fy.i];
-  if (c.bo_qua) { bub("kq", `<span class="muc">${MUC[c.muc]}</span>${esc(c.bo_qua)}`); fy.kq.push({ muc: c.muc, dat: null }); return tiep(); }
-  bub("bot", `<span class="muc">${MUC[c.muc]}</span>${esc(c.hoi)}`);
+  if (c.bo_qua) { fy.kq.push({ muc: c.muc, dat: null, bo: true }); return tiep(); }
+  fy.so++;
+  bub("bot", (fy.mo ? fy.mo + "\n\n" : "") + `<span class="muc">Câu ${fy.so}/${fy.tong} · ${MUC[c.muc]}</span>${esc(c.hoi)}`);
+  fy.mo = "";
   hien(true, c.muc === 3);
 }
 
@@ -554,7 +560,7 @@ async function traLoi(text) {
 function ketThuc() {
   hien(false); if (!fy) return;
   const dau = { true: "✅", false: "❌", null: "–" };
-  const dong = fy.kq.map(r => `${dau[r.dat]} ${MUC[r.muc]}`).join("\n");
+  const dong = fy.kq.filter(r => !r.bo).map(r => `${dau[r.dat]} ${MUC[r.muc]}`).join("\n");
   const xem = [...new Set(fy.kq.filter(r => r.dat === false).flatMap(r => r.tro))];
   bub("bot", `<b>Tổng kết: ${esc(fy.ten)}</b>\n${dong || "Chưa trả lời câu nào."}` +
     (xem.length ? `\nNên xem lại:<div class="tro">${xem.map(x => `<span>${esc(x)}</span>`).join("")}</div>` : "\nBạn giải thích ổn rồi 🎉"));
