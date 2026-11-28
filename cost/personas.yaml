@@ -13,24 +13,24 @@ users:              # số người dùng thật nếu đưa vào dùng — 3 k�
   low: 300
   base: 700
   high: 1000
-  source: "(ví dụ) track A — thay bằng số của nhóm. Cơ sở: lớp L3 hơn 700 học viên (README hackathon); thấp, cao: (tự ước tính)"
+  source: "Cơ sở: lớp L3 hơn 700 học viên (README repo đề hackathon); thấp 300, cao 1000: (tự ước tính)"
 
 personas:           # ≥3 kiểu người dùng; share cộng lại = 1
   - name: dung_it
     share: 0.5              # tỉ lệ người dùng kiểu này
     uses_per_month: 4       # số phiên / người / tháng
     turns_per_session: 1    # số lượt hỏi trong một phiên
-    source: "(ví dụ) phỏng vấn P1, P3 — thay bằng nguồn của nhóm"
+    source: "(tự ước tính) — chưa có số đo tần suất dùng: khảo sát n=12 không hỏi câu này"
   - name: dung_vua
     share: 0.3
     uses_per_month: 10
     turns_per_session: 3
-    source: "(ví dụ) khảo sát n = 24, câu 3"
+    source: "(tự ước tính) — chưa có số đo tần suất dùng"
   - name: dung_nhieu
     share: 0.2
     uses_per_month: 20
     turns_per_session: 5
-    source: "(ví dụ) data/preclass: đếm số lượt / người — cách đếm ở evidence/data-mining.md"
+    source: "(tự ước tính) — chưa có số đo tần suất dùng"
 # Mỗi lượt hỏi lấy ngẫu nhiên một đầu vào trong eval/benchmark.csv (type thuong và kho).
 # Persona hỏi kiểu riêng: thêm vào persona đó
 #     types: [thuong, kho, tu_choi]
