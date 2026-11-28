@@ -160,5 +160,5 @@ Nhóm dùng stack khác (Node, Streamlit, notebook…): sửa hàm `run_app()` t
 | 4 | Bản chạy thử làm trọn lát cắt | `codebase/` · lệnh ở mục "Lệnh" |
 | 5 | Định nghĩa "tốt" + bộ câu thử | `data/DATA_CARD.md` · `eval/` |
 | 6 | Mô phỏng chi phí khi dùng thật | `cost/` |
-| 7 | Slide + demo + video dự phòng | slide trong repo (PDF, PPTX, HTML…) hoặc link slide ở form CP4 · link video: ____ |
+| 7 | Slide + demo + video dự phòng | slide trong repo (PDF, PPTX, HTML…) hoặc link slide ở form CP4 · `demo-slides.pdf` · video dự phòng CP4 (quay trên giao diện web, gpt-5-mini thật): https://youtu.be/6WCbfzqKo7Y · video CP3 (30 giây, bản chạy thử gọi AI thật): https://youtu.be/9zUn2nzibEI |
 | + | *Bonus:* người dùng thử | `validation/log.md` |
