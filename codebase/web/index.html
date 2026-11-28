@@ -282,6 +282,8 @@ async function hoi(text) {
   text = (text ?? q.value).trim();
   if (!text) { q.focus(); return; }
   q.value = text; send.disabled = true; status.textContent = "Agent đang làm việc…";
+  const link = text.match(/https:\/\/github\.com\/[\w.-]+\/[\w.-]+/i);
+  if (link) repoIn.value = link[0];   // dán link vào ô chat → nhớ ở ô repo, câu sau (vd bấm nút CP) vẫn đọc repo này
   const repo = repoIn.value.trim();
   localStorage.setItem("repo", repo);
   const full = repo && !/github\.com\//i.test(text) ? text + "\nRepo: " + repo : text;
