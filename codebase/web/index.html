@@ -163,11 +163,36 @@ summary { cursor: pointer; font-weight: 600; color: var(--primary-hover); font-s
 .f-empty { color: var(--ink-muted); font-size: .95rem; margin: auto 0; }
 .vein { position: absolute; right: 16px; top: 18px; width: 120px; height: auto; opacity: .5; pointer-events: none; }
 .hidden { display: none !important; }
+/* tab + heatmap "lớp kẹt ở đâu" */
+.tabs { display: flex; gap: 6px; background: var(--surface); padding: 5px; border-radius: var(--r-pill); box-shadow: var(--shadow-sm); }
+.tabs button { border: 0; background: none; font-weight: 700; font-size: .9rem; color: var(--text-soft); padding: 8px 18px; border-radius: var(--r-pill); }
+.tabs button[aria-selected="true"] { background: var(--primary); color: #fff; }
+.heat-block { background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--shadow-md); padding: 28px 32px; margin-bottom: 24px; }
+.heat-block h2 { font-size: 1.5rem; }
+.src { font-size: .875rem; font-weight: 600; color: var(--text-muted); margin: 0 0 18px; }
+.days { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.day { border: 2px solid transparent; border-radius: var(--r-md); padding: 10px 8px; text-align: center; font-weight: 700; color: var(--text); }
+.day small { display: block; font-size: .8125rem; font-weight: 600; }
+.day.toi { color: #fff; }
+.day[aria-pressed="true"] { border-color: var(--text); box-shadow: 0 0 0 3px var(--surface) inset; }
+.scale { display: flex; align-items: center; gap: 6px; font-size: .8125rem; font-weight: 600; color: var(--text-muted); margin: 14px 0 0; flex-wrap: wrap; }
+.scale i { width: 26px; height: 12px; border-radius: 4px; display: inline-block; }
+.kn-bars { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 12px; }
+.kn-bars li { display: grid; grid-template-columns: minmax(0, 1fr) 72px; gap: 4px 14px; align-items: center; }
+.kn-bars code { font-size: .9rem; word-break: break-all; }
+.kn-bars b { text-align: right; font-size: .95rem; }
+.bar { grid-column: 1 / -1; height: 10px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--primary); border-radius: 0 4px 4px 0; }
+.kn-bars li.it { color: var(--text-muted); }
+.kn-bars li.it .bar span { background: var(--border); }
+.app-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.app-list li { background: var(--surface-2); border-radius: var(--r-sm); padding: 10px 14px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 1rem; }
+
 
 .reveal { animation: rise .8s var(--silk) both; }
 @keyframes rise { from { opacity: 0; transform: translateY(28px); } }
 @media (max-width: 1024px) { .result { grid-template-columns: 1fr; } .feynman { position: static; height: 560px; } }
-@media (max-width: 768px) { :root { --pad-x: 20px; } .flower { width: 80px; top: 16px; right: -8px; } .panel, .kn { padding: 20px; }
+@media (max-width: 768px) { :root { --pad-x: 20px; } .status { display: none; } .tabs button { padding: 8px 12px; } .flower { width: 80px; top: 16px; right: -8px; } .panel, .kn { padding: 20px; }
   .hero { padding-top: 40px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
@@ -175,9 +200,14 @@ summary { cursor: pointer; font-weight: 600; color: var(--primary-hover); font-s
 <body>
 <header class="top"><div class="wrap">
   <a class="logo" href="/">Bản đồ <span>bài giảng ↔ code</span></a>
+  <nav class="tabs" role="tablist" aria-label="Chế độ xem">
+    <button role="tab" aria-selected="true" data-tab="hoi">Hỏi bài</button>
+    <button role="tab" aria-selected="false" data-tab="heat">Lớp kẹt ở đâu</button>
+  </nav>
   <span class="status" id="status">Sẵn sàng</span>
 </div></header>
 
+<div id="view-hoi">
 <section class="hero"><div class="wrap">
   <img class="flower" src="/jade-flower.svg" alt="">
   <div class="reveal">
@@ -203,6 +233,16 @@ summary { cursor: pointer; font-weight: 600; color: var(--primary-hover); font-s
 <main><div class="wrap">
   <div id="out" aria-live="polite"></div>
 </div></main>
+</div>
+
+<div id="view-heat" class="hidden">
+<section class="hero"><div class="wrap">
+  <h1>Lớp đang <em>kẹt ở đâu</em>?</h1>
+  <p class="lead">Dành cho người ra đề và mentor: khái niệm nào nhiều bạn chưa vững để giảng lại. Chỉ có số gộp, không có tên ai,
+    không có trang xem từng người. Ô dưới 5 người ghi "chưa đủ dữ liệu".</p>
+</div></section>
+<main><div class="wrap" id="heat-out"><div class="panel">Đang tải số liệu…</div></div></main>
+</div>
 
 <script>
 const $ = (s, el = document) => el.querySelector(s);
@@ -374,12 +414,63 @@ function ve(dt) {
   return s + "</svg>";
 }
 
+/* ---------- tab + heatmap ---------- */
+const MAU = [[0.2, "#EAF5F3"], [0.4, "#CDE8E3"], [0.6, "#9DD5CD"], [0.8, "#1A7A6E"], [1.01, "#13655B"]];
+const mau = r => MAU.find(([m]) => r < m)[1];
+let heat = null, dayChon = null;
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
+  $("#view-hoi").classList.toggle("hidden", b.dataset.tab !== "hoi");
+  $("#view-heat").classList.toggle("hidden", b.dataset.tab !== "heat");
+  if (b.dataset.tab === "heat") taiHeat();
+}));
+
+if (new URLSearchParams(location.search).get("tab") === "heat") setTimeout(() => document.querySelector('[data-tab="heat"]').click(), 0);
+
+async function taiHeat() {
+  try {
+    const r = await fetch("/api/heatmap"); heat = await r.json();
+    if (!r.ok) throw new Error(heat.loi || "Lỗi " + r.status);
+    veHeat();
+  } catch (err) { $("#heat-out").innerHTML = `<div class="panel notice loi"><h3>❌ Chưa tải được số liệu</h3><p>${esc(err.message)}</p></div>`; }
+}
+
+function veHeat() {
+  const pc = heat.preclass, ap = heat.app;
+  let h = `<section class="heat-block"><h2>Từ data <em>preclass</em> của khoá</h2>
+    <p class="src">Nguồn: ${esc(pc.nguon)}. Ô Day = lượt trả lời sai ngay lần đầu ở bài ôn cuối ngày / tổng lượt (người × khái niệm). Thanh = số người sai / số người làm khái niệm đó.</p>`;
+  if (!pc.co_du_lieu) h += `<p>Máy này chưa có data preclass (<code>data-btc/preclass/answers.csv</code>, không commit vào repo).</p>`;
+  else {
+    const du = pc.theo_day.filter(d => d.du);
+    if (!dayChon) dayChon = [...(du.length ? du : pc.theo_day)].sort((a, b) => b.luot_sai / b.luot - a.luot_sai / a.luot)[0].day;
+    h += `<div class="days" role="group" aria-label="Chọn ngày học">${pc.theo_day.map(d => {
+      const r = d.luot_sai / d.luot, c = d.du ? mau(r) : "#FFFFFF";
+      const nhan = d.du ? `${d.luot_sai}/${d.luot} lượt` : `chưa đủ (${d.tong} người)`;
+      return `<button class="day ${d.du && r >= 0.6 ? "toi" : ""}" style="background:${c};${d.du ? "" : "border:2px dashed var(--border);color:var(--text-muted)"}"
+        aria-pressed="${d.day === dayChon}" data-day="${d.day}"
+        title="${esc(d.day)} ${esc(d.bai)}: ${d.luot_sai}/${d.luot} lượt trả lời sai lần đầu, ${d.tong} người làm">${esc(d.day)}<small>${nhan}</small></button>`;
+    }).join("")}</div>
+    <div class="scale">Ít người sai ${MAU.map(([m, c]) => `<i style="background:${c}" title="dưới ${Math.min(100, Math.round(m * 100))}%"></i>`).join("")} Nhiều người sai</div>`;
+    const d = pc.theo_day.find(x => x.day === dayChon);
+    h += `<h3 style="margin-top:28px">${esc(d.day)} <span style="color:var(--text-soft);font-weight:600">${esc(d.bai)}</span></h3>
+      <ul class="kn-bars">${d.khai_niem.map(k => `<li class="${k.du ? "" : "it"}" title="${esc(k.kc)}: ${k.sai}/${k.tong} người sai lần đầu">
+        <code>${esc(k.kc)}</code><b>${k.du ? `${k.sai}/${k.tong}` : "chưa đủ"}</b>
+        <div class="bar"><span style="width:${k.du ? (100 * k.sai / k.tong).toFixed(0) : 0}%"></span></div></li>`).join("")}</ul>`;
+  }
+  h += `</section><section class="heat-block"><h2>Từ câu hỏi trên <em>app</em></h2>
+    <p class="src">Nguồn: log ẩn danh khi học viên hỏi trên trang này (chỉ ghi lab, CP, tên khái niệm). Mỗi câu hỏi tính 1 lượt.</p>`;
+  if (!ap.du_du_lieu) h += `<p>⏳ Chưa đủ dữ liệu: mới ${ap.tong_luot}/5 lượt hỏi. Dùng càng nhiều, bảng này càng chính xác.</p>`;
+  else h += `<ul class="app-list">${ap.top_ket.slice(0, 12).map(k => `<li><span><b>${esc(k.lab)} ${esc(k.cp || "")}</b> ${esc(k.khai_niem)}</span><span>${esc(k.badge)}</span></li>`).join("")}</ul>`;
+  $("#heat-out").innerHTML = h + `</section>`;
+  document.querySelectorAll("[data-day]").forEach(b => b.addEventListener("click", () => { dayChon = b.dataset.day; veHeat(); }));
+}
+
 /* ---------- Feynman ---------- */
 function feynmanPanel() {
   return `<aside class="feynman" aria-label="Giải thích lại cho người mới">
-    <span class="f-label">Feynman · tự nguyện</span>
-    <h2>Giải thích lại cho <em>người mới</em></h2>
-    <p class="f-sub">Agent đóng vai người chưa học gì. Bạn giải thích, nó đối chiếu với slide và code. Kết quả chỉ hiện ở đây, không lưu, không ai xem.</p>
+    <span class="f-label">Feynman (tự học)</span>
+    <h2>Your partner in <em>crime</em></h2>
+    <p class="f-sub">Try your knowledge here.</p>
     <div class="f-log" id="flog"><p class="f-empty">Chọn một khái niệm bên trái, bấm "Giải thích lại cho người mới" để bắt đầu.</p></div>
     <div id="fabc" class="f-abc hidden" style="margin-top:12px"><button data-c="A">A</button><button data-c="B">B</button><button data-c="C">C</button></div>
     <form class="f-input hidden" id="fform"><textarea id="fq" placeholder="Giải thích bằng lời của bạn…" aria-label="Câu trả lời"></textarea>
