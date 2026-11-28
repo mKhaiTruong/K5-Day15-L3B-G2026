@@ -210,4 +210,4 @@ Hành vi mong muốn là chuẩn để chấm, chưa phải kết quả đo (k�
 
 | Thời điểm | Đổi gì | Vì sao |
 |---|---|---|
-|  |  |  |
+| 28/11 sau 14:30 | README hạng mục 7: thêm link video dự phòng CP4 (https://youtu.be/6WCbfzqKo7Y) và video CP3 (https://youtu.be/9zUn2nzibEI). Không đổi code, câu thử, kết quả | Video đã nộp ở form CP3 / CP4, ghi vào repo cho giám khảo xem |
