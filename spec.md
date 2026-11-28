@@ -25,11 +25,15 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): sẽ dùng
 
 | Hướng | Bao nhiêu người gặp | Bao nhiêu lần / tháng | Mỗi lần tốn gì | Impact / tháng | Làm kịp không | Chọn? |
 |---|---|---|---|---|---|---|
-| Bản đồ bài giảng ↔ code lab theo CP (lõi + 3 feature) | __ học viên AI20K *(chờ sĩ số)* | ~__ lab / tháng *(tự ước tính, chờ phỏng vấn)* | __ khái niệm / lab không giải thích được + __ phút tự nối slide với code *(chờ phỏng vấn)* | __ | Có — 1 lab + slide của buổi đó, test lấy từ lab Day1–15 thật | ✅ |
+| Bản đồ bài giảng ↔ code lab theo CP (lõi + 3 feature) | >700 học viên lớp L3 × 15/48 (31,3%) gặp ≈ 219 người | ~20 lab / tháng | 1 lab xong mà không nối được khái niệm đã học với code; số phút: chưa có nguồn (phỏng vấn 0/3) | ≈ 4.375 lượt / tháng | Có — 1 lab + slide của buổi đó, test lấy từ lab Day1–15 thật | ✅ |
 | Chỉ tìm file cần sửa theo CP (bản đầu) | __ | ~__ lab / tháng | ~__ phút mò repo | __ | Có | ❌ giúp làm nhanh nhưng không chắc giúp hiểu; giữ làm feature 1 |
 | Feynman tutor đứng riêng (ôn lại lab sau khi nộp) | __ | thấp — chỉ khi sắp bị hỏi vấn đáp *(tự ước tính)* | __ | __ | Có | ❌ gộp thành feature 3 |
 
-- **Impact / tháng** của hướng chọn = __ người × __ lần × __ phút = __ — nguồn từng thừa số: chờ phỏng vấn / khảo sát *(chưa có số, không tự điền)*
+- **Impact / tháng** của hướng chọn = 700 người × 15/48 × 20 lab ≈ **4.375 lượt "xong lab mà không nối được khái niệm với code" / tháng** (cận trên với tỉ lệ khảo sát 10/12: ≈ 11.667)
+    - 700: quy mô lớp L3 "hơn 700 học viên, cả khoá hơn 1.000" — BTC, guide 4.2
+    - 15/48 (31,3%): học viên sai lại ở bài ôn cuối ngày đúng khái niệm đã làm đúng ở mini lab — data preclass, `evidence/summary.md` (nguồn đạt ngưỡng); 10/12 không chỉ được `file:hàm` khi đóng code — khảo sát n = 12, chưa đạt ngưỡng 20, chỉ dùng làm cận trên
+    - ~20 lab / tháng: 13 lab Day01–13 có dữ liệu trong khoảng 05/11–22/11 (~17 ngày) trong `data-btc/preclass/answers.csv` *(suy ra từ ngày có dữ liệu, không phải lịch học chính thức)*
+    - Chưa quy ra giờ: không có số phút mỗi lần tự nối slide với code (phỏng vấn 0/3). Muốn quy ra giờ thì phải ghi rõ *(tự ước tính)*
 - Hướng ĐÃ LOẠI + vì sao (giữ lại, đừng xoá):
     - Track B (B1 tra cứu hướng dẫn, B2 tương tác thuốc, B3 sàng lọc tại nhà thuốc): B2 rủi ro y khoa cao; B3 khó gặp dược sĩ trong 2 ngày; nhóm không muốn làm y tế
     - Chỉ tìm file cần sửa: mục tiêu cuối của nhóm là hiểu bài, không phải làm nhanh. Giữ lại làm feature 1
