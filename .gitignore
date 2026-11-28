@@ -40,3 +40,5 @@ data/labs/
 data/heatmap/
 data/cache/
 .pytest_cache/
+# Ghi chú / kịch bản nói cá nhân (không commit)
+slides/demo-script-ducanh.md

@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Demo Slides — Nhóm G2026 (L3B)</title>
+<style>
+  @page {
+    size: 1280px 720px;
+    margin: 0;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    background: #0f172a;
+    color: #0f172a;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .deck-stage {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide {
+    width: 1280px;
+    height: 720px;
+    background: #f8fafc;
+    position: absolute;
+    overflow: hidden;
+    padding: 28px 46px 22px 46px;
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    border-radius: 6px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    transform-origin: center center;
+  }
+
+  .slide > div:first-child {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .slide.active {
+    display: flex;
+  }
+
+  /* Navigation controls (hidden in print/PDF) */
+  .deck-nav {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.84);
+    backdrop-filter: blur(8px);
+    color: #f8fafc;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    font-size: 12.5px;
+    user-select: none;
+  }
+
+  .deck-nav button {
+    background: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+    border: none;
+    border-radius: 999px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+
+  .deck-nav button:hover:not(:disabled) {
+    background: #2563eb;
+  }
+
+  .deck-nav button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .deck-counter {
+    font-weight: 700;
+    min-width: 44px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .deck-hint {
+    font-size: 11.5px;
+    color: #94a3b8;
+    margin-left: 4px;
+    padding-left: 8px;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  @media print {
+    html, body {
+      background: #ffffff !important;
+      width: auto;
+      height: auto;
+      overflow: visible !important;
+    }
+
+    .deck-stage {
+      display: block !important;
+      width: auto !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    .slide {
+      display: flex !important;
+      position: relative !important;
+      transform: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .slide:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    .deck-nav {
+      display: none !important;
+    }
+  }
+
+  /* Top accent bar */
+  .slide::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #1d4ed8 0%, #0284c7 65%, #ea580c 100%);
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 14px;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1d4ed8;
+    background: #dbeafe;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+  }
+
+  .title {
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.18;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    font-size: 15.5px;
+    color: #475569;
+    margin-top: 5px;
+    line-height: 1.4;
+  }
+
+  .meta-badge {
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 13px;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 8px 14px;
+    line-height: 1.45;
+  }
+
+  .meta-badge strong {
+    color: #0f172a;
+    display: block;
+    font-size: 13.5px;
+  }
+
+  /* Body grids */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 22px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .grid-2-equal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  .card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  }
+
+  .card-accent-blue {
+    border-left: 5px solid #1d4ed8;
+  }
+
+  .card-accent-orange {
+    border-left: 5px solid #ea580c;
+  }
+
+  .card-soft-blue {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+  }
+
+  .card-soft-orange {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+  }
+
+  .card-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .tag {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #334155;
+  }
+
+  .tag-blue {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .tag-orange {
+    background: #ffedd5;
+    color: #9a3412;
+  }
+
+  /* KPI Row */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .kpi {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 11px 12px;
+  }
+
+  .kpi-num {
+    font-size: 25px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .kpi-num.blue { color: #1d4ed8; }
+  .kpi-num.orange { color: #ea580c; }
+  .kpi-num.slate { color: #0f172a; }
+
+  .kpi-sub {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  .kpi-desc {
+    font-size: 12.5px;
+    color: #334155;
+    margin-top: 5px;
+    line-height: 1.35;
+  }
+
+  /* Lists */
+  ul.clean {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  ul.clean li {
+    font-size: 13.8px;
+    line-height: 1.42;
+    color: #1e293b;
+    padding-left: 16px;
+    position: relative;
+  }
+
+  ul.clean li::before {
+    content: "•";
+    position: absolute;
+    left: 2px;
+    top: 0;
+    color: #1d4ed8;
+    font-weight: 800;
+  }
+
+  ul.clean.orange li::before {
+    color: #ea580c;
+  }
+
+  code {
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 12.5px;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+  }
+
+  /* Quote box */
+  .quote-box {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.42;
+    color: #334155;
+  }
+
+  .quote-box strong {
+    color: #0f172a;
+  }
+
+  /* Tables */
+  table.compact {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+
+  table.compact th {
+    text-align: left;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 6px 9px;
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  table.compact td {
+    padding: 5.5px 9px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+    line-height: 1.33;
+    color: #1e293b;
+  }
+
+  table.compact tr:last-child td {
+    border-bottom: none;
+  }
+
+  .pill-good {
+    display: inline-block;
+    background: #dcfce7;
+    color: #166534;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 2px 7px;
+    border-radius: 6px;
+  }
+
+  .pill-warn {
+    display: inline-block;
+    background: #ffedd5;
+    color: #9a3412;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 2px 7px;
+    border-radius: 6px;
+  }
+
+  /* Reason blocks */
+  .reason-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .reason-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: #1d4ed8;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .reason-text {
+    font-size: 13.2px;
+    line-height: 1.38;
+    color: #1e293b;
+  }
+
+  .reason-text strong {
+    color: #0f172a;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11.5px;
+    color: #64748b;
+    flex-shrink: 0;
+  }
+
+  .footer strong {
+    color: #334155;
+  }
+</style>
+</head>
+<body>
+  <main class="deck-stage" id="deckStage">
+
+  <!-- ==================== TRANG 1: NGƯỜI DÙNG & PAIN ==================== -->
+  <section class="slide active">
+    <div>
+      <div class="header">
+        <div>
+          <div class="eyebrow">Track A · EdTech · Trang 1/8</div>
+          <h1 class="title">Người dùng &amp; Pain: Test xanh nhờ AI, nhưng đứt gãy bài giảng ↔ code</h1>
+          <p class="subtitle">
+            <strong>Người dùng mục tiêu:</strong> Học viên AI20K đang làm hoặc vừa nộp lab, muốn hiểu bài chứ không chỉ chạy cho test xanh (<code>spec.md</code> §1).
+          </p>
+        </div>
+        <div class="meta-badge">
+          <strong>Nhóm G2026 · L3B</strong>
+          Phòng C401 · 28/11/2026
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Cột trái: Đào data preclass -->
+        <div class="col">
+          <div class="card card-accent-blue">
+            <div class="card-title">
+              <span>1. Bằng chứng từ Data Preclass (Day01–Day13)</span>
+              <span class="tag tag-blue">data/preclass/answers.csv · 3.776 dòng</span>
+            </div>
+            <div class="kpi-row">
+              <div class="kpi">
+                <div class="kpi-num blue">95,4%</div>
+                <div class="kpi-sub">480 / 503 bước</div>
+                <div class="kpi-desc">Mini lab làm đúng ngay lần đầu tiên</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-num orange">16,5%</div>
+                <div class="kpi-sub">18 / 109 học viên</div>
+                <div class="kpi-desc">Từng tự giải thích lại khi làm mini lab</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-num orange">31,3%</div>
+                <div class="kpi-sub">15 / 48 học viên</div>
+                <div class="kpi-desc">Sai lại ở bài ôn cuối ngày dù đã qua mini lab</div>
+              </div>
+            </div>
+            <ul class="clean" style="margin-top: 12px;">
+              <li><strong>74,3% (909/1.223)</strong> câu nhắn với AI không có ý riêng (<code>rubric_y_moi = 0</code>) → phụ thuộc AI để qua bước thực hành.</li>
+              <li><strong>20/148 (13,5%)</strong> câu ôn cuối ngày sai ngay ở khái niệm đã qua trước đó.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <span>Ví dụ thực tế đã ẩn danh</span>
+              <span class="tag">evidence/data-mining.md</span>
+            </div>
+            <div class="quote-box">
+              <strong>A03725</strong> (Day02, <code>select_rule_workflow_agent_level</code>), <strong>A00948</strong> (Day03, <code>agentic_fit_scoring_decision</code>), <strong>A00012</strong> (Day06, <code>gate_severity_and_strictness</code>): đều đã qua bước mini lab cùng <code>kc_code</code>, nhưng sang bài ôn cuối ngày <code>pre_post_post</code> lần 1 đều chọn sai (<code>was_correct = False</code>).
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột phải: Khảo sát ngoài nhóm + Kết luận khớp -->
+        <div class="col">
+          <div class="card card-accent-orange">
+            <div class="card-title">
+              <span>2. Khảo sát học viên ngoài nhóm</span>
+              <span class="tag tag-orange">evidence/survey/results.csv · n = 12</span>
+            </div>
+            <ul class="clean orange">
+              <li><strong>11/12</strong> code chủ yếu do AI viết (<code>6/12</code> gần như AI viết hết · <code>5/12</code> phần lớn AI viết, mình sửa).</li>
+              <li><strong>8/12</strong> không tự tin diễn giải checkpoint khi mới làm xong (<code>1/12</code> không chắc · chỉ <code>3/12</code> tự tin).</li>
+              <li><strong>10/12</strong> không chỉ được chính xác khái niệm nằm ở <code>file:hàm</code> nào khi đóng code (<code>8/12</code> chỉ nhớ mang máng file, không nhớ hàm).</li>
+              <li><strong>8/12</strong> từng chủ động mở lại slide bài giảng để đối chiếu với code — chứng tỏ người học có nhu cầu nối bài giảng ↔ code.</li>
+            </ul>
+            <div class="quote-box" style="margin-top: 10px;">
+              <strong>Phiếu P05:</strong> <em>"Phần lớn do AI viết, mình sửa"</em> · Tự tin diễn giải: <em>"Không"</em> · Chỉ file/hàm: <em>"Nhớ mang máng file, không nhớ hàm"</em> · Cách hiểu lại: <em>"Hỏi ChatGPT/Claude"</em>.
+            </div>
+          </div>
+
+          <div class="card card-soft-blue" style="padding: 13px 18px;">
+            <div class="card-title" style="margin-bottom: 5px;">
+              <span>Kết luận &amp; Khoảng trống minh bạch</span>
+              <span class="tag tag-blue">evidence/summary.md</span>
+            </div>
+            <p style="font-size: 13.3px; line-height: 1.42; color: #1e293b;">
+              <strong>Hai nguồn khớp nhau:</strong> Làm qua lab ≠ hiểu khái niệm và không định vị được <code>file:hàm</code> trong code.
+              <br />
+              <strong>Chưa đo được:</strong> Phỏng vấn sâu mới đạt <code>0/3</code> nên chưa có số phút trung bình mỗi lần học viên tự nối slide với code.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>Nguồn: <strong>evidence/summary.md</strong> · <strong>evidence/data-mining.md</strong> · <strong>evidence/survey/results.csv</strong> · <strong>spec.md §1</strong></span>
+      <span>Bản đồ bài giảng ↔ code lab theo CP</span>
+    </div>
+  </section>
+
+  <!-- ==================== TRANG 2: VÌ SAO CHỌN HƯỚNG NÀY ==================== -->
+  <section class="slide">
+    <div>
+      <div class="header">
+        <div>
+          <div class="eyebrow">Track A · EdTech · Trang 2/8</div>
+          <h1 class="title">Vì sao chọn: Bản đồ bài giảng ↔ code lab theo CP</h1>
+          <p class="subtitle">
+            Giải đúng điểm đứt gãy giữa slide lý thuyết và repo lab mà công cụ chung chưa làm được, gộp thành 1 lõi + 3 feature.
+          </p>
+        </div>
+        <div class="meta-badge">
+          <strong>Nhóm G2026 · L3B</strong>
+          Phòng C401 · 28/11/2026
+        </div>
+      </div>
+
+      <div class="grid-2-equal">
+        <!-- Cột trái: 3 lý do chọn + hướng đã loại -->
+        <div class="col">
+          <div class="card card-accent-blue">
+            <div class="card-title">
+              <span>3 lý do chọn hướng này</span>
+              <span class="tag tag-blue">spec.md §2 &amp; evidence/summary.md</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 11px;">
+              <div class="reason-item">
+                <div class="reason-num">1</div>
+                <div class="reason-text">
+                  <strong>Nhu cầu nối slide ↔ code có thật:</strong> <code>8/12</code> học viên khảo sát từng tự mở lại slide để đối chiếu code; <code>9/12</code> phải hỏi ChatGPT/Claude khi muốn hiểu lại lab.
+                </div>
+              </div>
+              <div class="reason-item">
+                <div class="reason-num">2</div>
+                <div class="reason-text">
+                  <strong>Chặn rủi ro ngay bằng code, không tin hoàn toàn LLM:</strong> Workflow 6 bước kiểm tra hàm có thật (<code>kiem_ham_ton_tai</code>), mã slide có thật (<code>ma_slide_ton_tai</code>), ép nhãn <code>khong_dung</code> cho file khung.
+                </div>
+              </div>
+              <div class="reason-item">
+                <div class="reason-num">3</div>
+                <div class="reason-text">
+                  <strong>1 lõi dùng chung cho 3 feature:</strong> Gom lộ trình file theo CP (F1) + heatmap câu hỏi ẩn danh (F2) + phiên tự giải thích Feynman (F3) để vừa chỉ đường vừa kiểm tra hiểu.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <span>Các hướng đã loại (và lý do)</span>
+              <span class="tag">spec.md §2</span>
+            </div>
+            <table class="compact">
+              <thead>
+                <tr>
+                  <th style="width: 34%;">Hướng đã xét</th>
+                  <th>Lý do loại / cách xử lý</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Chỉ tìm file cần sửa</strong></td>
+                  <td>Chỉ giúp làm nhanh, không giúp hiểu bài → giữ làm <strong>Feature 1</strong>.</td>
+                </tr>
+                <tr>
+                  <td><strong>Feynman tutor đứng riêng</strong></td>
+                  <td>Ít ai tự mở app để bị kiểm tra → gộp thành <strong>Feature 3</strong> dùng chung lõi.</td>
+                </tr>
+                <tr>
+                  <td><strong>App giám sát từng học viên</strong></td>
+                  <td>Lộ lỗi cá nhân, trái luật Track A → heatmap chỉ hiện số gộp (<strong>≥ 5 người</strong>).</td>
+                </tr>
+                <tr>
+                  <td><strong>Track B (y tế) / Gallery repo</strong></td>
+                  <td>Track B rủi ro y khoa cao; Gallery trùng DeepWiki, phần AI mờ.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cột phải: So sánh giải pháp tương tự -->
+        <div class="col">
+          <div class="card card-accent-orange" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="card-title">
+              <span>Khác biệt với công cụ học viên đang dùng</span>
+              <span class="tag tag-orange">spec.md §3</span>
+            </div>
+            <table class="compact" style="flex: 1;">
+              <thead>
+                <tr>
+                  <th style="width: 22%;">Công cụ</th>
+                  <th style="width: 38%;">Hạn chế với bài toán AI20K</th>
+                  <th style="width: 40%;">Giải pháp của G2026</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>DeepWiki</strong></td>
+                  <td>Không có slide khoá học, không tách theo CP, không phân biệt file khung.</td>
+                  <td><span class="pill-good">Gắn slide + CP</span><br />Nối khái niệm slide với đúng CP / hàm, ép <code>khong_dung</code> cho file khung.</td>
+                </tr>
+                <tr>
+                  <td><strong>NotebookLM</strong></td>
+                  <td>Phải nạp slide + code thủ công từng buổi, không hiểu cấu trúc repo lab theo CP.</td>
+                  <td><span class="pill-good">Đọc thẳng repo + slide</span><br />Có sẵn tóm tắt slide mã <code>DayNN-s&lt;trang&gt;</code> và kiểm hàm/slide bằng code.</td>
+                </tr>
+                <tr>
+                  <td><strong>ChatGPT / Claude</strong></td>
+                  <td>Dễ bịa tên hàm / nguồn slide; sẵn sàng viết hộ code hoặc bảo sửa cả file khung.</td>
+                  <td><span class="pill-good">Không viết hộ &amp; chặn bịa</span><br />Hỏi lại khi thiếu CP, chỉ chỉ đường và kiểm chứng 100% bằng code ở bước 6.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="card-soft-orange" style="border-radius: 10px; padding: 11px 14px; margin-top: 12px;">
+              <div style="font-size: 13px; line-height: 1.42; color: #7c2d12;">
+                <strong>Impact / tháng (minh bạch dữ liệu):</strong> Khảo sát ghi nhận <code>8/12</code> học viên mất công tự nối slide với code và <code>10/12</code> không định vị được <code>file:hàm</code>; do chưa có phỏng vấn sâu (<code>0/3</code>), nhóm chưa điền số phút ước tính trên slide này (<code>spec.md</code> §2).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>Nguồn: <strong>spec.md §2–§4</strong> · <strong>evidence/summary.md</strong> · <strong>CLAUDE.md</strong></span>
+      <span>Bản đồ bài giảng ↔ code lab theo CP</span>
+    </div>
+  </section>
+
+  <!-- ==================== TRANG 3: GIẢI PHÁP & KIẾN TRÚC ==================== -->
+  <section class="slide">
+    <div>
+      <div class="header">
+        <div>
+          <div class="eyebrow">Track A · EdTech · Trang 3/8</div>
+          <h1 class="title">Giải pháp: Workflow 6 bước + 1 lõi dùng chung 3 feature</h1>
+          <p class="subtitle">
+            <strong>Lát cắt 1 câu:</strong> Học viên chọn lab + CP → AI ghép khái niệm slide với <code>file:hàm</code> (đọc / sửa / không đụng) và kiểm chứng 100% bằng code.
+          </p>
+        </div>
+        <div class="meta-badge">
+          <strong>Nhóm G2026 · L3B</strong>
+          Phòng C401 · 28/11/2026
+        </div>
+      </div>
+
+      <div class="grid-2-equal">
+        <div class="col">
+          <div class="card card-accent-blue" style="flex: 1;">
+            <div class="card-title">
+              <span>Sơ đồ workflow cố định 6 bước</span>
+              <span class="tag tag-blue">spec.md §4 · codebase/agent.py</span>
+            </div>
+            <div class="quote-box" style="margin-bottom: 10px; background: #eff6ff; border-color: #93c5fd;">
+              <strong>[CHỜ KHUÊ ~12:45]</strong> Chèn sơ đồ kiến trúc / ảnh flow chính thức từ Khuê vào đây.
+            </div>
+            <ul class="clean">
+              <li><strong>Bước 1–2:</strong> Đọc cấu trúc lab (<code>doc_cau_truc_lab</code>); từ chối nếu không phải lab; hỏi lại 1 câu nếu thiếu CP (G10).</li>
+              <li><strong>Bước 3–4:</strong> Đọc CP + file khung (<code>doc_cp</code>, <code>tim_file_khung</code>) và trích đoạn slide (<code>tim_slide</code>).</li>
+              <li><strong>Bước 5:</strong> Chỉ dùng LLM ghép khái niệm ↔ <code>file:hàm</code> + lý do.</li>
+              <li><strong>Bước 6 (chặn rủi ro):</strong> Code kiểm tra <code>kiem_ham_ton_tai</code>, <code>ma_slide_ton_tai</code>, ép <code>khong_dung</code> cho file khung.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card card-accent-orange" style="flex: 1;">
+            <div class="card-title">
+              <span>3 feature dùng chung 1 lõi</span>
+              <span class="tag tag-orange">F1 · F2 · F3</span>
+            </div>
+            <ul class="clean orange">
+              <li><strong>F1 — Lộ trình file theo CP:</strong> Sơ đồ cấp hàm + danh sách file đọc / sửa / không đụng kèm trích dẫn slide + code.</li>
+              <li><strong>F2 — Heatmap ẩn danh (<code>f2_heatmap.py</code>):</strong> Ghi câu hỏi không lưu danh tính; dưới 5 mẫu báo <code>chưa đủ dữ liệu</code>; đủ <code>≥ 5</code> hiện badge <code>🔥 x/N</code>.</li>
+              <li><strong>F3 — Phiên Feynman:</strong> Agent đóng vai người mới hỏi, học viên tự giải thích lại, chấm đối chiếu slide + code (tự nguyện, chỉ mình thấy).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span>Nguồn: <strong>spec.md §4</strong> · <strong>codebase/agent.py</strong> · <strong>codebase/f2_heatmap.py</strong></span>
+      <span>Bản đồ bài giảng ↔ code lab theo CP</span>
+    </div>
+  </section>
+
+  <!-- ==================== TRANG 4: DEMO SẢN PHẨM ==================== -->
+  <section class="slide">
+    <div>
+      <div class="header">
+        <div>
+          <div class="eyebrow">Track A · EdTech · Trang 4/8</div>
+          <h1 class="title">Demo luồng chạy thật: Lộ trình F1 · Heatmap F2 · Feynman F3</h1>
+          <p class="subtitle">
+            Hỏi lab + CP → nhận card khái niệm có căn cứ slide &amp; <code>file:hàm</code> → xem điểm kẹt cả lớp → tự giải thích lại.
+          </p>
+        </div>
+        <div class="meta-badge">
+          <strong>Nhóm G2026 · L3B</strong>
+          Phòng C401 · 28/11/2026
+        </div>
+      </div>
+
+      <div class="grid-2-equal">
+        <div class="col">
+          <div class="card card-accent-blue" style="flex: 1;">
+            <div class="card-title">
+              <span>Giao diện Web UI / Terminal Demo</span>
+              <span class="tag tag-blue">codebase/web.py</span>
+            </div>
+            <div class="quote-box" style="flex: 1; min-height: 220px; display: flex; align-items: center; justify-content: center; text-align: center; background: #f8fafc;">
+              <div>
+                <strong>[CHỜ KHUÊ ~12:45]</strong><br />
+                Chèn screenshot UI web local (<code>codebase/web.py</code>)<br />
+                hoặc ảnh chạy terminal + HTML F1.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card card-accent-orange" style="flex: 1;">
+            <div class="card-title">
+              <span>Điểm nhấn trong Demo (Đức Anh &amp; Phong)</span>
+              <span class="tag tag-orange">Minh hoạ F2 + F3</span>
+            </div>
+            <ul class="clean orange">
+              <li><strong>F2 Heatmap (Đức Anh):</strong> Badge <code>🔥 x/N bạn hỏi ở đây</code> (hoặc <code>lượt hỏi</code>) chỉ hiện khi <code>≥ 5</code> mẫu; bảng top khái niệm lớp kẹt nhất ẩn danh hoàn toàn.</li>
+              <li><strong>F3 Feynman (Phong):</strong> Học viên tự giải thích bằng lời của mình; AI chỉ ra chỗ hổng và trỏ lại đúng <code>DayNN-s&lt;trang&gt;</code> + <code>file:hàm</code>.</li>
+              <li><strong>Chặn bịa &amp; từ chối đúng:</strong> Repo không phải lab → từ chối; thiếu CP → hỏi lại; đòi sửa file khung / viết hộ code → chặn.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span>Nguồn: <strong>codebase/web.py</strong> · <strong>codebase/f2_heatmap.py</strong> · <strong>spec.md §4–§6</strong></span>
+      <span>Bản đồ bài giảng ↔ code lab theo CP</span>
+    </div>
+  </section>
+
+  <!-- ==================== TRANG 5: ĐÁNH GIÁ LƯỢT 1 → LƯỢT 2 ==================== -->
+  <section class="slide">
+    <div>
+      <div class="header">
+        <div>
+          <div class="eyebrow">Track A · EdTech · Trang 5/8</div>
+          <h1 class="title">Đánh giá: Lượt 1 → Sửa lỗi lõi → Lượt 2</h1>
+          <p class="subtitle">
+            Bộ câu thử <code>eval/benchmark.csv</code> (18 câu: 7 thường · 7 khó · 4 từ chối) · Chuẩn đạt: <code>≥ 80%</code> qua, <code>100%</code> từ chối qua, <code>0</code> sửa file khung.
+          </p>
+        </div>
+        <div class="meta-badge">
+          <strong>Nhóm G2026 · L3B</strong>
+          Phòng C401 · 28/11/2026
+        </div>
+      </div>
+
+      <div class="grid-2-equal">
+        <div class="col">
+          <div class="card card-accent-blue">
+            <div class="card-title">
+              <span>Kết quả chạy Benchmark</span>
+              <span class="tag tag-blue">eval/report.md</span>
+            </div>
+            <div class="kpi-row">
+              <div class="kpi">
+                <div class="kpi-num slate">__/__</div>
+                <div class="kpi-sub">Lượt 1 (run-1)</div>
+                <div class="kpi-desc">[CHỜ KHÁNH ~12:30] % đạt lượt 1</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-num blue">__/__</div>
+                <div class="kpi-sub">Lượt 2 (run-2/3)</div>
+                <div class="kpi-desc">[CHỜ KHÁNH ~12:30] % đạt lượt cuối</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-num orange">__/__</div>
+                <div class="kpi-sub">Câu từ chối</div>
+                <div class="kpi-desc">Mục tiêu: 4/4 (100%) đạt</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="flex: 1;">
+            <div class="card-title">
+              <span>Đã sửa gì giữa Lượt 1 và Lượt 2</span>
+              <span class="tag">PR sửa lõi</span>
+            </div>
+            <ul class="clean">
+              <li><strong>Sửa lỗi nối hàm ngoài chủ đề:</strong> Chỉ đưa model các hàm thuộc CP đang xét, bỏ khái niệm trích slide không khớp (vd <code>Day13 CP1</code> gắn nhầm 6 hàm thống kê vào <code>Day13-s17</code>).</li>
+              <li><strong>[CHỜ KHÁNH ~12:30]</strong> Bổ sung thêm các fix từ PR #18 (B18/B22/B11) và số trước → sau của nhóm lỗi này.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="card card-accent-orange" style="flex: 1;">
+            <div class="card-title">
+              <span>Lỗi tiêu biểu &amp; Lỗi còn lại</span>
+              <span class="tag tag-orange">eval/report.md</span>
+            </div>
+            <table class="compact">
+              <thead>
+                <tr>
+                  <th style="width: 18%;">Câu</th>
+                  <th style="width: 40%;">Input / Output sai</th>
+                  <th style="width: 42%;">Vì sao sai</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>[B__]</strong></td>
+                  <td>[CHỜ KHÁNH ~12:30]</td>
+                  <td>Lấy ≥ 3 lỗi thật từ <code>eval/report.md</code>.</td>
+                </tr>
+                <tr>
+                  <td><strong>[B__]</strong></td>
+                  <td>[CHỜ KHÁNH ~12:30]</td>
+                  <td>Input · Output · Vì sao sai.</td>
+                </tr>
+                <tr>
+                  <td><strong>[B__]</strong></td>
+                  <td>[CHỜ KHÁNH ~12:30]</td>
+                  <td>Lỗi còn lại chưa sửa xong.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span>Nguồn: <strong>eval/report.md</strong> · <strong>eval/benchmark.csv</strong> · <strong>spec.md §7</strong></span>
+      <span>Bản đồ bài giảng ↔ code lab theo CP</span>
+    </div>
+  </section>
+
+  <!-- ==================== TRANG 6: CHI PHÍ KHI DÙNG THẬT ==================== -->
+  <section class="slide">
+    <div>
+      <div class="header">
+        <div>
+          <div class="eyebrow">Track A · EdTech · Trang 6/8</div>
+          <h1 class="title">Chi phí khi dùng thật: Mô phỏng &amp; So sánh Model</h1>
+          <p class="subtitle">
+            Công thức: <strong>Chi phí / task thành công</strong> = Chi phí TB mỗi phiên ÷ Tỉ lệ đạt lượt cuối (mô phỏng ≥ 50 phiên).
+          </p>
+        </div>
+        <div class="meta-badge">
+          <strong>Nhóm G2026 · L3B</strong>
+          Phòng C401 · 28/11/2026
+        </div>
+      </div>
+
+      <div class="grid-2-equal">
+        <div class="col">
+          <div class="card card-accent-blue" style="flex: 1;">
+            <div class="card-title">
+              <span>So sánh ≥ 2 Model &amp; 3 kịch bản quy mô</span>
+              <span class="tag tag-blue">cost/cost-estimate.md</span>
+            </div>
+            <table class="compact">
+              <thead>
+                <tr>
+                  <th>Model / Kịch bản</th>
+                  <th>Chi phí / phiên</th>
+                  <th>Chi phí / task thành công</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Model 1: [Tên model]</strong></td>
+                  <td>[CHỜ KHÁNH]</td>
+                  <td>[CHỜ KHÁNH ~12:30]</td>
+                </tr>
+                <tr>
+                  <td><strong>Model 2: [Tên model]</strong></td>
+                  <td>[CHỜ KHÁNH]</td>
+                  <td>[CHỜ KHÁNH ~12:30]</td>
+                </tr>
+                <tr>
+                  <td><strong>Thấp / Cơ sở / Cao</strong></td>
+                  <td colspan="2">[CHỜ KHÁNH] Chi phí / tháng ở quy mô lớp AI20K.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card card-accent-orange" style="flex: 1;">
+            <div class="card-title">
+              <span>Chi phí vs. Impact — Có đáng làm không?</span>
+              <span class="tag tag-orange">spec.md §8</span>
+            </div>
+            <ul class="clean orange">
+              <li><strong>Vì sao chi phí thấp:</strong> Dùng workflow cố định 6 bước, AI chỉ chạy ở bước 5 (không để agent gọi tool vòng lặp vô hạn).</li>
+              <li><strong>[CHỜ KHÁNH ~12:30]:</strong> Điền con số cụ thể $/học viên/tháng và đối chiếu với bài toán giúp học viên hiểu bài &amp; định vị <code>file:hàm</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span>Nguồn: <strong>cost/cost-estimate.md</strong> · <strong>cost/personas.yaml</strong> · <strong>spec.md §8</strong></span>
+      <span>Bản đồ bài giảng ↔ code lab theo CP</span>
+    </div>
+  </section>
+
+  <!-- ==================== TRANG 7: QUYẾT ĐỊNH GO / ITERATE / STOP ==================== -->
+  <section class="slide">
+    <div>
+      <div class="header">
+        <div>
+          <div class="eyebrow">Track A · EdTech · Trang 7/8</div>
+          <h1 class="title">Quyết định: Go / Iterate / Stop &amp; An toàn sản phẩm</h1>
+          <p class="subtitle">
+            Đánh giá thẳng thắn mức độ sẵn sàng đưa vào lớp AI20K dựa trên kết quả eval lượt cuối và rủi ro còn lại.
+          </p>
+        </div>
+        <div class="meta-badge">
+          <strong>Nhóm G2026 · L3B</strong>
+          Phòng C401 · 28/11/2026
+        </div>
+      </div>
+
+      <div class="grid-2-equal">
+        <div class="col">
+          <div class="card card-accent-blue" style="flex: 1;">
+            <div class="card-title">
+              <span>Quyết định đề xuất: [ITERATE / GO]</span>
+              <span class="tag tag-blue">Chốt theo số lượt 2/3</span>
+            </div>
+            <ul class="clean">
+              <li><strong>Điểm đã sẵn sàng:</strong> Lõi 6 bước chặn bịa hàm &amp; file khung bằng code; F2 heatmap bảo vệ ẩn danh (<code>≥ 5</code> mẫu); F3 Feynman đối chiếu slide.</li>
+              <li><strong>Điểm chưa xong (<code>CLAUDE.md</code> / <code>eval/report.md</code>):</strong> [CHỜ SỐ LƯỢT CUỐI] — bổ sung các lỗi còn lại và độ phủ gói kiến thức slide (hiện mới có mẫu Day13/Day14).</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card card-accent-orange" style="flex: 1;">
+            <div class="card-title">
+              <span>Rào chắn an toàn &amp; Phần không làm</span>
+              <span class="tag tag-orange">spec.md §4 &amp; §9</span>
+            </div>
+            <ul class="clean orange">
+              <li><strong>Không sửa repo:</strong> Không viết hộ code, không sửa file khung.</li>
+              <li><strong>Không giám sát cá nhân:</strong> Heatmap chỉ hiện số gộp khi <code>≥ 5</code> người; kết quả Feynman chỉ học viên tự xem.</li>
+              <li><strong>Không tự suy diễn:</strong> Thiếu căn cứ slide ghi <code>khong_co_can_cu</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span>Nguồn: <strong>eval/report.md</strong> · <strong>spec.md §9</strong> · <strong>CLAUDE.md</strong></span>
+      <span>Bản đồ bài giảng ↔ code lab theo CP</span>
+    </div>
+  </section>
+
+  <!-- ==================== TRANG 8: NẾU CÓ THÊM 1 TUẦN ==================== -->
+  <section class="slide">
+    <div>
+      <div class="header">
+        <div>
+          <div class="eyebrow">Track A · EdTech · Trang 8/8</div>
+          <h1 class="title">Nếu có thêm 1 tuần: Lộ trình hoàn thiện &amp; đo Learning Metric</h1>
+          <p class="subtitle">
+            Tập trung vá các lỗi còn lại từ <code>eval/report.md</code>, mở rộng gói kiến thức đủ 15 ngày và đo hiệu quả học thật.
+          </p>
+        </div>
+        <div class="meta-badge">
+          <strong>Nhóm G2026 · L3B</strong>
+          Phòng C401 · 28/11/2026
+        </div>
+      </div>
+
+      <div class="grid-2-equal">
+        <div class="col">
+          <div class="card card-accent-blue" style="flex: 1;">
+            <div class="card-title">
+              <span>3 việc ưu tiên nếu có thêm 1 tuần</span>
+              <span class="tag tag-blue">Roadmap</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 11px;">
+              <div class="reason-item">
+                <div class="reason-num">1</div>
+                <div class="reason-text">
+                  <strong>Mở rộng gói kiến thức slide đủ Day01–Day15:</strong> Chuẩn hoá tự động mã đoạn <code>DayNN-s&lt;trang&gt;</code> thay vì gom tay từng buổi.
+                </div>
+              </div>
+              <div class="reason-item">
+                <div class="reason-num">2</div>
+                <div class="reason-text">
+                  <strong>Vá lỗi còn lại từ <code>eval/report.md</code>:</strong> [CHỜ KHÁNH] Điền nhóm lỗi còn sót sau lượt cuối.
+                </div>
+              </div>
+              <div class="reason-item">
+                <div class="reason-num">3</div>
+                <div class="reason-text">
+                  <strong>Đo Learning Metric &amp; phỏng vấn sâu:</strong> Chạy quiz khái niệm trước/sau khi dùng app trên lớp thật và hoàn thành <code>≥ 3</code> phỏng vấn sâu đo số phút tiết kiệm.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card card-soft-blue" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div class="card-title">
+              <span>Tóm tắt 1 câu cho Hội đồng</span>
+              <span class="tag tag-blue">Nhóm G2026 · L3B</span>
+            </div>
+            <p style="font-size: 16px; line-height: 1.5; color: #0f172a; font-weight: 600;">
+              “AI không viết hộ code — AI nối đúng khái niệm trong slide với đúng <code>file:hàm</code> của từng CP, kiểm chứng bằng code để học viên hiểu bài thật sự.”
+            </p>
+            <p style="font-size: 13px; color: #475569; margin-top: 12px;">
+              Cảm ơn Thầy/Cô và Hội đồng đã lắng nghe! Sẵn sàng nhận câu hỏi về lõi, F2 heatmap, F3 Feynman, eval &amp; chi phí.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span>Nguồn: <strong>eval/report.md</strong> · <strong>CLAUDE.md</strong> · <strong>spec.md §1–§10</strong></span>
+      <span>Bản đồ bài giảng ↔ code lab theo CP</span>
+    </div>
+  </section>
+
+  </main>
+
+  <nav class="deck-nav" aria-label="Điều khiển slide">
+    <button id="prevBtn" title="Trang trước (←)">◀</button>
+    <span class="deck-counter" id="slideCounter">1 / 2</span>
+    <button id="nextBtn" title="Trang sau (→ / Space)">▶</button>
+    <button id="fsBtn" title="Toàn màn hình (F)">⛶</button>
+    <span class="deck-hint">← → hoặc Space</span>
+  </nav>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const fsBtn = document.getElementById('fsBtn');
+      const counter = document.getElementById('slideCounter');
+      let current = 0;
+
+      function scaleSlides() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const scale = Math.min(vw / 1280, vh / 720);
+        slides.forEach((s) => {
+          s.style.transform = `scale(${scale})`;
+        });
+      }
+
+      function showSlide(idx) {
+        current = Math.max(0, Math.min(slides.length - 1, idx));
+        slides.forEach((s, i) => s.classList.toggle('active', i === current));
+        counter.textContent = `${current + 1} / ${slides.length}`;
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === slides.length - 1;
+      }
+
+      prevBtn.addEventListener('click', () => showSlide(current - 1));
+      nextBtn.addEventListener('click', () => showSlide(current + 1));
+
+      fsBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+          e.preventDefault();
+          showSlide(current + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+          e.preventDefault();
+          showSlide(current - 1);
+        } else if (e.key === 'Home') {
+          showSlide(0);
+        } else if (e.key === 'End') {
+          showSlide(slides.length - 1);
+        } else if (e.key === 'f' || e.key === 'F') {
+          fsBtn.click();
+        }
+      });
+
+      window.addEventListener('resize', scaleSlides);
+      scaleSlides();
+      showSlide(0);
+    })();
+  </script>
+
+</body>
+</html>
