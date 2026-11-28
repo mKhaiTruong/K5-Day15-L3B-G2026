@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day13 · bản đồ bài giảng ↔ code</title>
+<style>
+:root {
+  --bg: #D1E4DD; --surface: #FFFFFF; --primary: #28303D; --text: #39414D; --muted: #4F5866;
+  --soft: #D1DFE4; --accent: #EEEADD; --khung: #E4D1D1; --error: #A0474A;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  --fs-body: 20px; --fs-sm: 18px; --fs-xs: 16px; --fs-h2: 36px; --fs-h3: 24px;
+  --space: 20px; --space-x: 25px; --space-y: 30px;
+}
+@media (min-width: 652px) { :root { --fs-h2: 48px; } }
+* { box-sizing: border-box; border-radius: 0; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 var(--fs-body)/1.7 var(--font); }
+h2 { font-size: var(--fs-h2); line-height: 1.3; font-weight: 400; color: var(--primary); margin: 0 0 var(--space); }
+h3 { font-size: var(--fs-h3); line-height: 1.3; font-weight: 400; color: var(--primary); margin: 0 0 10px; }
+p { margin: 0 0 var(--space); max-width: 610px; }
+a { color: var(--primary); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+code { font-family: ui-monospace, Consolas, monospace; font-size: var(--fs-sm); color: var(--primary); }
+.masthead { padding: var(--space-y) var(--space-x) var(--space); margin: 0 var(--space-x);
+  border-bottom: 3px solid var(--primary); box-shadow: 0 5px 0 -4px var(--primary); }
+.site { font-size: 24px; text-transform: uppercase; color: var(--primary); margin: 0; max-width: none; }
+.sub { font-size: var(--fs-sm); color: var(--muted); margin: 5px 0 0; }
+.layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: calc(var(--space) * 2);
+  max-width: 1240px; margin: 0 auto; padding: var(--space-y) var(--space-x) calc(var(--space-y) * 2); }
+nav { position: sticky; top: var(--space); align-self: start; }
+nav ol { list-style: none; margin: 0; padding: 0; border-top: 3px solid var(--primary); }
+nav li { border-bottom: 1px solid var(--primary); }
+nav a { display: block; padding: 13px 10px; text-decoration: none; font-size: var(--fs-sm); }
+nav a[aria-current="true"] { background: var(--surface); font-weight: 600; }
+nav .rong { color: var(--muted); font-size: var(--fs-xs); }
+.cp { margin-bottom: calc(var(--space-y) * 2); scroll-margin-top: var(--space); }
+.loi-nhan { background: var(--surface); border: 3px solid var(--primary); padding: var(--space); max-width: 610px; }
+.flow-wrap { position: relative; isolation: isolate; margin: var(--space-y) 16px var(--space-y) 0; }
+.flow-wrap::before { content: ""; position: absolute; inset: 16px -16px -16px 16px; z-index: -1;
+  border: 1px solid var(--primary);
+  background: repeating-linear-gradient(-45deg, var(--primary) 0 1px, var(--soft) 1px 7px); }
+.flow { background: var(--surface); border: 3px solid var(--primary); padding: var(--space); overflow-x: auto; margin: 0; }
+.flow-wrap .crop { position: absolute; width: 24px; height: 24px; pointer-events: none; }
+.crop.tl { top: -12px; left: -12px; border-top: 1px solid var(--primary); border-left: 1px solid var(--primary); }
+.crop.br { bottom: -12px; right: -12px; border-bottom: 1px solid var(--primary); border-right: 1px solid var(--primary); }
+pre.mermaid { font-size: var(--fs-xs); white-space: pre-wrap; margin: 0; }
+.chu-thich { font-size: var(--fs-xs); color: var(--muted); margin-top: 26px; }
+ol.steps { list-style: none; counter-reset: b; margin: 0; padding: 0; }
+ol.steps > li { counter-increment: b; display: grid; grid-template-columns: 56px minmax(0, 1fr);
+  gap: 0 var(--space); padding: var(--space) 0; border-top: 1px solid var(--primary); }
+ol.steps > li::before { content: counter(b); font-size: 32px; line-height: 1.1; color: var(--primary); }
+.nhan { display: inline-block; font-size: var(--fs-xs); font-weight: 500; padding: 2px 10px;
+  border: 2px solid var(--primary); margin-right: 10px; color: var(--primary); }
+.nhan.sua { background: var(--accent); } .nhan.doc { background: var(--soft); }
+.meta { font-size: var(--fs-sm); margin: 6px 0 0; max-width: none; }
+.slide { display: inline-block; font-size: var(--fs-xs); background: var(--surface); border: 1px solid var(--primary);
+  padding: 0 8px; margin: 4px 6px 0 0; }
+.bao-sai { font-size: var(--fs-xs); }
+.khung { background: var(--khung); border: 3px solid var(--error); padding: var(--space); margin-top: var(--space-y); }
+.khung ul { margin: 0; padding-left: 22px; font-size: var(--fs-sm); }
+.cho-trong { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space); margin-top: var(--space-y); }
+.cho-trong div { background: var(--accent); border: 1px dashed var(--primary); padding: 15px var(--space); font-size: var(--fs-sm); }
+@media (max-width: 821px) {
+  .layout { grid-template-columns: 1fr; }
+  nav { position: static; }
+  .cho-trong { grid-template-columns: 1fr; }
+  .flow-wrap::before { inset: 10px -10px -10px 10px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <p class="site">Day13 · bản đồ bài giảng ↔ code</p>
+  <p class="sub">Mỗi CP: khái niệm trong slide nằm ở file nào, đọc theo thứ tự nào, file nào không được đụng.</p>
+</header>
+<div class="layout">
+  <nav aria-label="Các checkpoint"><ol><li><a href="#cp-cp1" aria-current="true">✅ CP1</a></li><li><a href="#cp-cp2">✅ CP2</a></li><li><a href="#cp-cp3">CP3 <span class="rong">· chưa nối được</span></a></li><li><a href="#cp-cp4">✅ CP4</a></li><li><a href="#cp-cp5">CP5 <span class="rong">· chưa nối được</span></a></li></ol></nav>
+  <main><section class="cp" id="cp-cp1"><h2>CP1</h2><div class="flow-wrap"><span class="crop tl"></span><span class="crop br"></span><figure class="flow"><pre class="mermaid">flowchart LR
+    subgraph F1[&quot;src/lab13.py&quot;]
+        n1[&quot;✏️ he_so_chi_phi_moi_viec_thanh_cong()&quot;]:::sua
+        n2[&quot;✏️ mo_hinh()&quot;]:::sua
+        n3[&quot;✏️ so_lan_chay_ky_vong()&quot;]:::sua
+        n4[&quot;✏️ ti_le_thanh_cong()&quot;]:::sua
+        n5[&quot;✏️ kiem_tra_dap_an_biet_truoc()&quot;]:::sua
+    end
+    n1 --&gt; n3
+    n1 --&gt; n4
+    n5 --&gt; n3
+    n5 --&gt; n1
+    K[&quot;⛔ Đừng đụng&lt;br/&gt;src/lab13_starter.py&lt;br/&gt;src/logix_requests.csv&lt;br/&gt;src/logix_runs.csv&quot;]:::khung
+    classDef sua fill:#EEEADD,stroke:#28303D,stroke-width:3px,color:#28303D
+    classDef doc fill:#D1DFE4,stroke:#28303D,stroke-width:1px,color:#28303D
+    classDef phu fill:#FFFFFF,stroke:#28303D,stroke-width:1px,stroke-dasharray:4 3,color:#28303D
+    classDef khung fill:#E4D1D1,stroke:#A0474A,stroke-width:2px,color:#28303D</pre></figure></div><p class="chu-thich">Mỗi khung là 1 file, mỗi ô là 1 hàm. Mũi tên: hàm này gọi hàm kia. Ô viền đứt: hàm phụ được gọi tới, không nằm trong lộ trình.</p><ol class="steps"><li><div><h3><span class="nhan sua">✏️ Sửa</span><code>src/lab13.py</code></h3><p class="meta">Hàm: <code>he_so_chi_phi_moi_viec_thanh_cong, mo_hinh, so_lan_chay_ky_vong, ti_le_thanh_cong, kiem_tra_dap_an_biet_truoc</code></p><p class="meta">Khái niệm: Chi phí mỗi việc thành công (công thức tổng quát); Tử số tính mọi lần chạy (kể cả lần lỗi); Mẫu số chỉ đếm việc đã &#x27;thành_công&#x27; (phải định nghĩa &#x27;thành_công&#x27;); Số lần chạy kỳ vọng với retry (tác động của chạy lại tối đa 3 lần); Ba phép thử đáp án biết trước (tự kiểm tra kết quả mẫu 1.20·1.25·1.25); Mô hình theo giá và nhóm theo cột &#x27;loai&#x27;; cộng chi phí cố định cho phạm vi &#x27;noi_dia&#x27;+&#x27;hang_nang&#x27;</p><p class="meta"><span class="slide">Day13-s12</span></p><p class="meta bao-sai"><a href="https://github.com/mKhaiTruong/K5-Day15-L3B-G2026/issues/new?title=%5BF1+b%C3%A1o+sai%5D+Day13+CP1%3A+src%2Flab13.py&amp;body=Lab%3A+Day13%0ACP%3A+CP1%0AFile%3A+src%2Flab13.py+%28sua%29%0AH%C3%A0m%3A+he_so_chi_phi_moi_viec_thanh_cong%2C+mo_hinh%2C+so_lan_chay_ky_vong%2C+ti_le_thanh_cong%2C+kiem_tra_dap_an_biet_truoc%0ASlide%3A+Day13-s12%0A%0ASai+%E1%BB%9F+%C4%91%C3%A2u+%28nh%C3%A3n+%2F+h%C3%A0m+%2F+slide%29%2C+%C4%91%C3%BAng+ra+l%C3%A0+g%C3%AC%3A%0A" target="_blank" rel="noopener">Báo chỗ sai</a> (mở issue công khai trên GitHub)</p></div></li></ol><div class="khung"><h3>⛔ Đừng đụng</h3><p class="meta">File khung của đề, sửa là hỏng test hoặc bị trừ điểm.</p><ul><li><code>src/lab13_starter.py</code></li><li><code>src/logix_requests.csv</code></li><li><code>src/logix_runs.csv</code></li></ul></div><div class="cho-trong"><div>🔥 Bao nhiêu bạn kẹt ở CP này: chưa nối (feature 2)</div><div>💬 Giải thích lại cho mình nghe: chưa nối (feature 3)</div></div></section><section class="cp" id="cp-cp2"><h2>CP2</h2><div class="flow-wrap"><span class="crop tl"></span><span class="crop br"></span><figure class="flow"><pre class="mermaid">flowchart LR
+    subgraph F1[&quot;src/lab13.py&quot;]
+        n1[&quot;✏️ mo_hinh()&quot;]:::sua
+    end
+    K[&quot;⛔ Đừng đụng&lt;br/&gt;src/lab13_starter.py&lt;br/&gt;src/logix_requests.csv&lt;br/&gt;src/logix_runs.csv&quot;]:::khung
+    classDef sua fill:#EEEADD,stroke:#28303D,stroke-width:3px,color:#28303D
+    classDef doc fill:#D1DFE4,stroke:#28303D,stroke-width:1px,color:#28303D
+    classDef phu fill:#FFFFFF,stroke:#28303D,stroke-width:1px,stroke-dasharray:4 3,color:#28303D
+    classDef khung fill:#E4D1D1,stroke:#A0474A,stroke-width:2px,color:#28303D</pre></figure></div><p class="chu-thich">Mỗi khung là 1 file, mỗi ô là 1 hàm. Mũi tên: hàm này gọi hàm kia. Ô viền đứt: hàm phụ được gọi tới, không nằm trong lộ trình.</p><ol class="steps"><li><div><h3><span class="nhan sua">✏️ Sửa</span><code>src/lab13.py</code></h3><p class="meta">Hàm: <code>mo_hinh</code></p><p class="meta">Khái niệm: Chi phí mỗi việc thành công; Tử số tính với mọi lần chạy (bao gồm lần hỏng); Mẫu số chỉ đếm việc đã thành công; Phải định nghĩa &#x27;thành công&#x27; trước khi tính; Kịch bản B1 — 9 kịch bản đổi từng yếu tố; Kịch bản B2 — một cặp yếu tố cùng đổi; Kịch bản B3 — giới hạn 1,2,3 lần chạy và chi phí cả hệ thống; Kịch bản B4 — xem lại 100% cho noi_dia + hang_nang; Tính chất mô hình cộng tuyến tính (tác động của cặp = tổng hai tác động riêng); Tự kiểm tra halving/doubling (kịch bản giảm một nửa so với gấp đôi)</p><p class="meta"><span class="slide">Day13-s12</span></p><p class="meta bao-sai"><a href="https://github.com/mKhaiTruong/K5-Day15-L3B-G2026/issues/new?title=%5BF1+b%C3%A1o+sai%5D+Day13+CP2%3A+src%2Flab13.py&amp;body=Lab%3A+Day13%0ACP%3A+CP2%0AFile%3A+src%2Flab13.py+%28sua%29%0AH%C3%A0m%3A+mo_hinh%0ASlide%3A+Day13-s12%0A%0ASai+%E1%BB%9F+%C4%91%C3%A2u+%28nh%C3%A3n+%2F+h%C3%A0m+%2F+slide%29%2C+%C4%91%C3%BAng+ra+l%C3%A0+g%C3%AC%3A%0A" target="_blank" rel="noopener">Báo chỗ sai</a> (mở issue công khai trên GitHub)</p></div></li></ol><div class="khung"><h3>⛔ Đừng đụng</h3><p class="meta">File khung của đề, sửa là hỏng test hoặc bị trừ điểm.</p><ul><li><code>src/lab13_starter.py</code></li><li><code>src/logix_requests.csv</code></li><li><code>src/logix_runs.csv</code></li></ul></div><div class="cho-trong"><div>🔥 Bao nhiêu bạn kẹt ở CP này: chưa nối (feature 2)</div><div>💬 Giải thích lại cho mình nghe: chưa nối (feature 3)</div></div></section><section class="cp" id="cp-cp3"><h2>CP3</h2><p class="loi-nhan">Chưa nối được khái niệm nào của CP này với hàm Python. CP có thể làm trên file khác (.md, .docx…) hoặc chưa có slide tương ứng — xem đề của CP.</p><div class="khung"><h3>⛔ Đừng đụng</h3><p class="meta">File khung của đề, sửa là hỏng test hoặc bị trừ điểm.</p><ul><li><code>src/lab13_starter.py</code></li><li><code>src/logix_requests.csv</code></li><li><code>src/logix_runs.csv</code></li></ul></div><div class="cho-trong"><div>🔥 Bao nhiêu bạn kẹt ở CP này: chưa nối (feature 2)</div><div>💬 Giải thích lại cho mình nghe: chưa nối (feature 3)</div></div></section><section class="cp" id="cp-cp4"><h2>CP4</h2><div class="flow-wrap"><span class="crop tl"></span><span class="crop br"></span><figure class="flow"><pre class="mermaid">flowchart LR
+    subgraph F1[&quot;src/lab13.py&quot;]
+        n1[&quot;📖 he_so_chi_phi_moi_viec_thanh_cong()&quot;]:::doc
+        n2[&quot;📖 co_mau_hai_ti_le()&quot;]:::doc
+        n3[&quot;📖 power_hai_ti_le()&quot;]:::doc
+        n4[&quot;📖 he_so_thiet_ke()&quot;]:::doc
+        n5[&quot;📖 co_mau_hieu_dung()&quot;]:::doc
+        n6[&quot;📖 m_toi_thieu()&quot;]:::doc
+        n7[&quot;📖 mo_hinh()&quot;]:::doc
+        n8[&quot;📖 kiem_tra_dap_an_biet_truoc()&quot;]:::doc
+        n9[&quot;📖 ti_le_thanh_cong()&quot;]:::doc
+    end
+    n1 --&gt; n9
+    n5 --&gt; n4
+    n8 --&gt; n1
+    K[&quot;⛔ Đừng đụng&lt;br/&gt;src/lab13_starter.py&lt;br/&gt;src/logix_requests.csv&lt;br/&gt;src/logix_runs.csv&quot;]:::khung
+    classDef sua fill:#EEEADD,stroke:#28303D,stroke-width:3px,color:#28303D
+    classDef doc fill:#D1DFE4,stroke:#28303D,stroke-width:1px,color:#28303D
+    classDef phu fill:#FFFFFF,stroke:#28303D,stroke-width:1px,stroke-dasharray:4 3,color:#28303D
+    classDef khung fill:#E4D1D1,stroke:#A0474A,stroke-width:2px,color:#28303D</pre></figure></div><p class="chu-thich">Mỗi khung là 1 file, mỗi ô là 1 hàm. Mũi tên: hàm này gọi hàm kia. Ô viền đứt: hàm phụ được gọi tới, không nằm trong lộ trình.</p><ol class="steps"><li><div><h3><span class="nhan doc">📖 Đọc</span><code>src/lab13.py</code></h3><p class="meta">Hàm: <code>he_so_chi_phi_moi_viec_thanh_cong, co_mau_hai_ti_le, power_hai_ti_le, he_so_thiet_ke, co_mau_hieu_dung, m_toi_thieu, mo_hinh, kiem_tra_dap_an_biet_truoc, ti_le_thanh_cong, so_lan_chay_ky_vong</code></p><p class="meta">Khái niệm: Chi phí mỗi việc thành công; Cỡ mẫu cho hai tỉ lệ (câu D1: tổng yêu cầu, theo nhân viên, theo depot, chênh 6 điểm); Hệ số thiết kế và cỡ mẫu hiệu dụng (để chuyển từ tổng yêu cầu sang số cụm/hiệu dụng); Thiết kế thí nghiệm / tách được tác động của trợ lý (câu D2); Tỉ lệ mở lại trong 7 ngày hiện tại (chỉ số an toàn cần tính trước khi đặt luật dừng)</p><p class="meta"><span class="slide">Day13-s12</span></p><p class="meta bao-sai"><a href="https://github.com/mKhaiTruong/K5-Day15-L3B-G2026/issues/new?title=%5BF1+b%C3%A1o+sai%5D+Day13+CP4%3A+src%2Flab13.py&amp;body=Lab%3A+Day13%0ACP%3A+CP4%0AFile%3A+src%2Flab13.py+%28doc%29%0AH%C3%A0m%3A+he_so_chi_phi_moi_viec_thanh_cong%2C+co_mau_hai_ti_le%2C+power_hai_ti_le%2C+he_so_thiet_ke%2C+co_mau_hieu_dung%2C+m_toi_thieu%2C+mo_hinh%2C+kiem_tra_dap_an_biet_truoc%2C+ti_le_thanh_cong%2C+so_lan_chay_ky_vong%0ASlide%3A+Day13-s12%0A%0ASai+%E1%BB%9F+%C4%91%C3%A2u+%28nh%C3%A3n+%2F+h%C3%A0m+%2F+slide%29%2C+%C4%91%C3%BAng+ra+l%C3%A0+g%C3%AC%3A%0A" target="_blank" rel="noopener">Báo chỗ sai</a> (mở issue công khai trên GitHub)</p></div></li></ol><div class="khung"><h3>⛔ Đừng đụng</h3><p class="meta">File khung của đề, sửa là hỏng test hoặc bị trừ điểm.</p><ul><li><code>src/lab13_starter.py</code></li><li><code>src/logix_requests.csv</code></li><li><code>src/logix_runs.csv</code></li></ul></div><div class="cho-trong"><div>🔥 Bao nhiêu bạn kẹt ở CP này: chưa nối (feature 2)</div><div>💬 Giải thích lại cho mình nghe: chưa nối (feature 3)</div></div></section><section class="cp" id="cp-cp5"><h2>CP5</h2><p class="loi-nhan">Chưa nối được khái niệm nào của CP này với hàm Python. CP có thể làm trên file khác (.md, .docx…) hoặc chưa có slide tương ứng — xem đề của CP.</p><div class="khung"><h3>⛔ Đừng đụng</h3><p class="meta">File khung của đề, sửa là hỏng test hoặc bị trừ điểm.</p><ul><li><code>src/lab13_starter.py</code></li><li><code>src/logix_requests.csv</code></li><li><code>src/logix_runs.csv</code></li></ul></div><div class="cho-trong"><div>🔥 Bao nhiêu bạn kẹt ở CP này: chưa nối (feature 2)</div><div>💬 Giải thích lại cho mình nghe: chưa nối (feature 3)</div></div></section></main>
+</div>
+<script type="module">
+  try {
+    const { default: mermaid } = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+    mermaid.initialize({ startOnLoad: false, theme: "base", securityLevel: "strict",
+      themeVariables: { fontFamily: "Segoe UI, Roboto, sans-serif", fontSize: "16px",
+        lineColor: "#28303D", primaryTextColor: "#28303D" } });
+    await mermaid.run({ querySelector: "pre.mermaid" });
+  } catch (err) {
+    document.querySelectorAll(".chu-thich").forEach(n => n.textContent = "Không tải được thư viện vẽ sơ đồ (cần mạng), đang hiện sơ đồ dạng chữ.");
+  }
+  const links = document.querySelectorAll("nav a");
+  links.forEach(a => a.addEventListener("click", () => {
+    links.forEach(x => x.removeAttribute("aria-current")); a.setAttribute("aria-current", "true");
+  }));
+</script>
+</body>
+</html>

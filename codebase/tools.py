@@ -90,6 +90,43 @@ def tim_repo(lab: str = "", ten_repo: str = "") -> str:
     return ""
 
 
+GITHUB_URL = re.compile(r"^https://github\.com/([\w.-]+)/([\w.-]+?)(?:\.git)?/?$")
+
+
+def _repos_dir() -> str:
+    return os.environ.get("REPOS_DIR") or os.path.join(ROOT, "data", "repos")
+
+
+@tool
+def lay_repo_github(url: str) -> str:
+    """Tải repo lab của học viên từ GitHub (repo công khai) về thư mục cache để đọc.
+
+    Input: url dạng https://github.com/<owner>/<repo>. Output: đường dẫn thư mục đã tải, "" nếu lỗi
+    (link sai dạng, repo riêng tư, mất mạng, quá 120 giây).
+    Clone `--filter=blob:none`: đủ lịch sử commit cho git diff, chỉ tải nội dung file khi cần.
+    Đã có bản cũ thì `git pull --ff-only`. Không hỏi mật khẩu (GIT_TERMINAL_PROMPT=0).
+    Tác động ra ngoài: CÓ — tải từ mạng, ghi vào REPOS_DIR (mặc định data/repos, gitignored);
+    chỉ đọc repo, không ghi gì lên GitHub.
+    """
+    import subprocess
+
+    m = GITHUB_URL.match(url.strip())
+    if not m:
+        return ""
+    dest = os.path.join(_repos_dir(), f"{m.group(1)}__{m.group(2)}")
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
+    lenh = (["git", "-C", dest, "pull", "--ff-only", "--quiet"] if os.path.isdir(os.path.join(dest, ".git")) else
+            ["git", "clone", "--filter=blob:none", "--quiet", f"https://github.com/{m.group(1)}/{m.group(2)}.git", dest])
+    os.makedirs(_repos_dir(), exist_ok=True)
+    try:
+        r = subprocess.run(lenh, check=False, env=env, capture_output=True, timeout=120)
+    except (OSError, subprocess.TimeoutExpired):
+        return dest if os.path.isdir(os.path.join(dest, ".git")) else ""
+    if r.returncode and not os.path.isdir(os.path.join(dest, ".git")):
+        return ""
+    return dest  # pull lỗi (mất mạng) nhưng đã có bản cũ → vẫn đọc bản cũ
+
+
 @tool
 def doc_cau_truc_lab(repo: str) -> dict:
     """Đọc cấu trúc repo và xác định có phải repo lab không.
@@ -153,7 +190,109 @@ def doc_cp(repo: str, cp: str) -> dict:
             py_files += _files_in_scope(repo, ref)
         elif ref.endswith(".py") and os.path.isfile(path):
             py_files.append(ref)
-    return {"mo_ta": mo_ta[:3000], "ham": _list_functions(repo, py_files), "todo": _todo_lines(repo, py_files, cp)}
+    todo = _todo_lines(repo, py_files, cp)
+    tat_ca = _list_functions(repo, py_files)
+    ham = _loc_ham_theo_todo(repo, tat_ca, todo, cp)
+    da_viet = _ham_da_viet(repo, py_files)
+    if len(ham) == len(tat_ca) and da_viet:  # TODO không thu hẹp được (vd đã xoá TODO) → lấy hàm học viên đã viết
+        ham = [h for h in tat_ca if (h["file"], h["ham"]) in da_viet] or tat_ca
+    return {"mo_ta": mo_ta[:3000], "ham": ham, "todo": todo,
+            "da_viet": sorted(f"{f}:{h}" for f, h in da_viet)}
+
+
+def _ham_da_viet(repo: str, py_files: list) -> set:
+    """Hàm học viên đã viết / sửa: khác giữa commit đầu tiên (đề BTC lúc tạo repo) và HEAD, theo git diff.
+
+    Đọc dòng đổi ở HEAD (`git diff -U0`), gán vào hàm cấp module chứa dòng đó (ast). Không phải repo git,
+    chỉ có 1 commit, hoặc git lỗi → set rỗng (giữ cách cũ).
+
+    Returns:
+        {(file, ten_ham), ...}, vd {("src/lab13.py", "so_lan_chay_ky_vong")}.
+    """
+    import subprocess
+
+    if not py_files or not os.path.isdir(os.path.join(repo, ".git")):
+        return set()
+
+    def git(*args):
+        r = subprocess.run(["git", "-C", repo, *args], check=False, capture_output=True, timeout=60,
+                           env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+        return r.stdout.decode("utf-8", "replace") if r.returncode == 0 else ""
+
+    try:
+        dau = git("rev-list", "--max-parents=0", "HEAD").split()
+        if not dau or dau[-1] == git("rev-parse", "HEAD").strip():
+            return set()
+        diff = git("diff", "-U0", dau[-1], "HEAD", "--", *sorted(set(py_files)))
+    except (OSError, subprocess.TimeoutExpired):
+        return set()
+    doi = {}  # file → các dòng đổi ở HEAD
+    file = None
+    for line in diff.splitlines():
+        if line.startswith("+++ "):
+            file = line[6:] if line.startswith("+++ b/") else None
+        elif line.startswith("@@") and file:
+            m = re.search(r"\+(\d+)(?:,(\d+))?", line)
+            bat_dau, so = int(m.group(1)), int(m.group(2) if m.group(2) is not None else 1)
+            doi.setdefault(file, set()).update(range(bat_dau, bat_dau + max(so, 1)))
+    out = set()
+    for rel, dong in doi.items():
+        try:
+            tree = ast.parse(_read(os.path.join(repo, rel)))
+        except SyntaxError:
+            continue
+        for n in tree.body:
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and not n.name.startswith("_") and \
+                    dong & set(range(n.lineno, (n.end_lineno or n.lineno) + 1)):
+                out.add((rel, n.name))
+    return out
+
+
+SO_HAM = re.compile(r"\b(\d+|một|hai|ba|bốn|năm|sáu)\s+hàm", re.IGNORECASE)
+SO_CHU = {"một": 1, "hai": 2, "ba": 3, "bốn": 4, "năm": 5, "sáu": 6}
+
+
+def _loc_ham_theo_todo(repo: str, ham: list, todo: list, cp: str) -> list:
+    """Giữ hàm mà TODO của đúng CP chỉ tới, để 1 file chứa nhiều CP không đưa model hàm của CP khác.
+
+    Hàm được giữ khi: chứa dòng TODO của CP · được TODO nhắc tên · hoặc là N hàm ngay sau một dòng TODO
+    ở cấp module ("viết ba hàm dưới đây" → 3 hàm; không ghi số → 1 hàm). Chỉ xét dòng comment `# TODO` ghi đúng CP;
+    không có TODO nào như vậy, hoặc lọc ra rỗng → trả nguyên danh sách (giữ cách cũ).
+
+    Args:
+        repo: Đường dẫn repo lab.
+        ham: Kết quả _list_functions: [{"file", "ham", "dong"}].
+        todo: Kết quả _todo_lines của CP.
+        cp: Mã CP, vd "CP1".
+
+    Returns:
+        Danh sách con của `ham`, giữ thứ tự cũ.
+    """
+    num = re.sub(r"\D", "", cp)
+    if not num:
+        return ham
+    this_cp = re.compile(rf"\bCP\s?{num}(?!\d)", re.IGNORECASE)
+    # chỉ dòng comment: docstring kiểu "đánh dấu TODO CP1…CP4" không chỉ tới hàm nào
+    todo = [t for t in todo if t["text"].startswith("#") and this_cp.search(t["text"])]
+    if not todo:
+        return ham
+    giu = set()
+    for rel in {t["file"] for t in todo}:
+        try:
+            tree = ast.parse(_read(os.path.join(repo, rel)))
+        except SyntaxError:
+            continue
+        defs = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        for t in (t for t in todo if t["file"] == rel):
+            ben_trong = [d for d in defs if d.lineno <= t["dong"] <= (d.end_lineno or d.lineno)]
+            giu |= {(rel, d.name) for d in ben_trong}
+            giu |= {(rel, d.name) for d in defs if re.search(rf"\b{re.escape(d.name)}\b", t["text"])}
+            if not ben_trong:  # TODO ở cấp module → lấy N hàm ngay sau nó
+                m = SO_HAM.search(t["text"])
+                n = (int(m.group(1)) if m.group(1).isdigit() else SO_CHU[m.group(1).lower()]) if m else 1
+                giu |= {(rel, d.name) for d in [d for d in defs if d.lineno > t["dong"]][:n]}
+    loc = [h for h in ham if (h["file"], h["ham"]) in giu or h["file"] not in {t["file"] for t in todo}]
+    return loc or ham
 
 
 def _files_in_scope(repo: str, folder: str) -> list:
